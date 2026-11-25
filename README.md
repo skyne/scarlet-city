@@ -20,6 +20,16 @@ python3 shared/codegen/generate.py
 
 That rewrites `server/src/protocol.rs` and `client/Protocol/*.cs`. Unions are internally tagged JSON (`"type": "Join"`).
 
+## Assets
+
+Binary game assets are not stored in git. Fetch them before running the client:
+
+```bash
+./scripts/fetch-assets.sh
+```
+
+This downloads `scarlet-city-assets.tar.gz` from the `assets-v1` GitHub release via `gh` and extracts into `client/wwwroot/assets/`.
+
 ## Run
 
 Terminal 1 — server (listens on `ws://localhost:3030/ws`):
