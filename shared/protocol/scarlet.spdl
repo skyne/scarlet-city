@@ -1,0 +1,194 @@
+# Scarlet Protocol Definition Language (SPDL)
+# Source of truth for client/server wire types.
+# Generate platform code:
+#   python3 shared/codegen/generate.py
+#
+# JSON encoding:
+#   - structs: objects with snake_case fields
+#   - enums: strings matching variant names
+#   - unions: internally tagged objects, discriminator field "type"
+
+protocol scarlet.city version 1
+json tagged "type"
+
+# --- primitives mapped by codegen: f32 f64 u8 u16 u32 u64 i32 i64 bool string uuid ---
+
+struct Vec3 {
+  x: f32
+  y: f32
+  z: f32
+}
+
+struct Aabb3 {
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+  z_min: f32
+  z_max: f32
+}
+
+enum VehicleKind {
+  GroundCar
+  HoverCraft
+}
+
+enum LootTier {
+  Common
+  Rare
+  Epic
+}
+
+struct Road {
+  id: string
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+}
+
+struct Obstacle {
+  id: string
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+  z_min: f32
+  z_max: f32
+}
+
+struct VehicleSpawn {
+  id: uuid
+  kind: VehicleKind
+  x: f32
+  y: f32
+  z: f32
+  yaw: f32
+}
+
+struct LootZone {
+  id: string
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+  z_min: f32
+  z_max: f32
+  tier: LootTier
+}
+
+struct ExfilZone {
+  id: string
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+  z_min: f32
+  z_max: f32
+  duration_secs: f32
+}
+
+struct MapBounds {
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+}
+
+struct MapData {
+  name: string
+  bounds: MapBounds
+  ground_z: f32
+  max_altitude: f32
+  roads: Road[]
+  obstacles: Obstacle[]
+  vehicle_spawns: VehicleSpawn[]
+  loot_zones: LootZone[]
+  exfil_zones: ExfilZone[]
+}
+
+struct PlayerState {
+  id: uuid
+  name: string
+  x: f32
+  y: f32
+  z: f32
+  yaw: f32
+  health: f32
+  vehicle_id: uuid?
+  extracting: bool
+  extract_progress: f32
+}
+
+struct VehicleState {
+  id: uuid
+  kind: VehicleKind
+  x: f32
+  y: f32
+  z: f32
+  yaw: f32
+  speed: f32
+  driver_id: uuid?
+}
+
+struct LootNode {
+  id: uuid
+  x: f32
+  y: f32
+  z: f32
+  tier: LootTier
+  taken: bool
+}
+
+struct Projectile {
+  id: uuid
+  x: f32
+  y: f32
+  z: f32
+  vx: f32
+  vy: f32
+  vz: f32
+  owner_id: uuid
+}
+
+union ClientMessage {
+  Join {
+    name: string
+  }
+  Input {
+    seq: u32
+    move_x: f32
+    move_y: f32
+    ascend_descend: f32
+    aim_angle: f32
+    shoot: bool
+    interact: bool
+    brake: bool
+  }
+  Ping {
+    client_ms: u64
+  }
+}
+
+union ServerMessage {
+  Welcome {
+    player_id: uuid
+    map: MapData
+  }
+  Snapshot {
+    tick: u64
+    players: PlayerState[]
+    vehicles: VehicleState[]
+    loot_nodes: LootNode[]
+    exfil_zones: ExfilZone[]
+    projectiles: Projectile[]
+  }
+  Event {
+    kind: string
+    message: string
+  }
+  Pong {
+    client_ms: u64
+    server_tick: u64
+  }
+}

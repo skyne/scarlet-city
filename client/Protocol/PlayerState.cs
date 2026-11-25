@@ -1,0 +1,44 @@
+// AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
+// Protocol scarlet.city v1
+
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
+
+namespace ScarletCity.Protocol;
+
+public sealed class PlayerState
+{
+    [JsonPropertyName("id")]
+    public Guid Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("x")]
+    public float X { get; set; }
+
+    [JsonPropertyName("y")]
+    public float Y { get; set; }
+
+    [JsonPropertyName("z")]
+    public float Z { get; set; }
+
+    [JsonPropertyName("yaw")]
+    public float Yaw { get; set; }
+
+    [JsonPropertyName("health")]
+    public float Health { get; set; }
+
+    [JsonPropertyName("vehicle_id")]
+    public Guid? VehicleId { get; set; }
+
+    [JsonPropertyName("extracting")]
+    public bool Extracting { get; set; }
+
+    [JsonPropertyName("extract_progress")]
+    public float ExtractProgress { get; set; }
+
+}
+

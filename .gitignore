@@ -1,0 +1,8 @@
+target/
+bin/
+obj/
+.vs/
+*.user
+.DS_Store
+*.pdb
+client/Properties/PublishProfiles/

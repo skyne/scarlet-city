@@ -1,0 +1,58 @@
+@page "/"
+@inject GameSession Session
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+<div class="hud">
+    <h1>Scarlet City</h1>
+    <p>@Session.Status</p>
+    <p>@HudLine()</p>
+    <p>@Session.LastEvent</p>
+</div>
+<canvas id="game-canvas"></canvas>
+@if (Session.Debug.Visible)
+{
+    <pre class="debug-overlay">@Session.Debug.Text()</pre>
+}
+<div class="help">WASD (camera: W = up the screen) · mouse aim · click shoot
+E enter/exit / loot · Space/C altitude (hover)
+Shift brake · F3 debug stats</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _ = Pulse();
+        try
+        {
+            var name = $"Runner-{Random.Shared.Next(100, 999)}";
+            var host = await Js.InvokeAsync<string>("eval", "window.location.hostname");
+            var ws = $"ws://{host}:3030/ws";
+            await Session.StartAsync(ws, name);
+        }
+        catch (Exception ex)
+        {
+            Session.LastEvent = ex.Message;
+        }
+    }
+
+    async Task Pulse()
+    {
+        while (true)
+        {
+            await Task.Delay(200);
+            StateHasChanged();
+        }
+    }
+
+    string HudLine()
+    {
+        var me = Session.Snapshot?.Players.FirstOrDefault(p => p.Id == Session.PlayerId);
+        if (me is null) return "awaiting snapshot";
+        var z = me.Z;
+        var ex = me.Extracting ? $" extract {me.ExtractProgress:P0}" : "";
+        return $"xyz ({me.X:0.0}, {me.Y:0.0}, {z:0.0}) hp {me.Health:0}{ex}";
+    }
+
+    public async ValueTask DisposeAsync() => await Session.DisposeAsync();
+}
