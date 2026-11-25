@@ -39,8 +39,8 @@ pub fn blocked_by_map(
         .any(|o| volume_hits_obstacle(x, y, radius, z_min, z_max, o))
 }
 
-/// 2D segment vs AABB, used with a height band for altitude-aware LOS.
-pub fn segment_hits_aabb(
+/// 2D segment vs AABB. Returns the entry and exit parameters on the segment.
+pub fn segment_aabb_span(
     x0: f32,
     y0: f32,
     x1: f32,
@@ -49,7 +49,7 @@ pub fn segment_hits_aabb(
     y: f32,
     w: f32,
     d: f32,
-) -> bool {
+) -> Option<(f32, f32)> {
     let min_x = x;
     let min_y = y;
     let max_x = x + w;
@@ -83,12 +83,134 @@ pub fn segment_hits_aabb(
         true
     };
 
-    clip(&mut t0, &mut t1, -dx, x0 - min_x)
+    if clip(&mut t0, &mut t1, -dx, x0 - min_x)
         && clip(&mut t0, &mut t1, dx, max_x - x0)
         && clip(&mut t0, &mut t1, -dy, y0 - min_y)
         && clip(&mut t0, &mut t1, dy, max_y - y0)
+        && t0 <= t1
+    {
+        Some((t0, t1))
+    } else {
+        None
+    }
 }
 
+/// 2D segment vs AABB, used with a height band for altitude-aware LOS.
+pub fn segment_hits_aabb(
+    x0: f32,
+    y0: f32,
+    x1: f32,
+    y1: f32,
+    x: f32,
+    y: f32,
+    w: f32,
+    d: f32,
+) -> bool {
+    segment_aabb_span(x0, y0, x1, y1, x, y, w, d).is_some()
+}
+
+/// Parameter span where `z(t)` lies in `[z_min, z_max]`. Unbounded when `z` is constant.
+fn altitude_span(z0: f32, z1: f32, z_min: f32, z_max: f32) -> Option<(f32, f32)> {
+    let dz = z1 - z0;
+    if dz.abs() <= 1.0e-5 {
+        if z0 >= z_min && z0 <= z_max {
+            Some((f32::NEG_INFINITY, f32::INFINITY))
+        } else {
+            None
+        }
+    } else {
+        let mut ta = (z_min - z0) / dz;
+        let mut tb = (z_max - z0) / dz;
+        if ta > tb {
+            std::mem::swap(&mut ta, &mut tb);
+        }
+        Some((ta, tb))
+    }
+}
+
+/// Earliest `t` in `[0, 1]` where the horizontal span and the altitude span overlap.
+fn earliest_t(horizontal: Option<(f32, f32)>, vertical: Option<(f32, f32)>) -> Option<f32> {
+    let (h0, h1) = horizontal?;
+    let (v0, v1) = vertical?;
+    if h1 < 0.0 || h0 > 1.0 || v1 < 0.0 || v0 > 1.0 {
+        return None;
+    }
+    let t0 = h0.max(v0).max(0.0);
+    let t1 = h1.min(v1).min(1.0);
+    if t0 <= t1 + 1.0e-4 {
+        Some(t0.clamp(0.0, 1.0))
+    } else {
+        None
+    }
+}
+
+/// Entry `t` along the segment if it meets the obstacle footprint while `z(t)` is inside `[z_min, z_max]`.
+pub fn segment_obstacle_t(
+    x0: f32,
+    y0: f32,
+    z0: f32,
+    x1: f32,
+    y1: f32,
+    z1: f32,
+    obs: &Obstacle,
+) -> Option<f32> {
+    earliest_t(
+        segment_aabb_span(x0, y0, x1, y1, obs.x, obs.y, obs.width, obs.depth),
+        altitude_span(z0, z1, obs.z_min, obs.z_max),
+    )
+}
+
+/// 2D segment vs circle. Returns entry and exit parameters (may lie outside `[0, 1]`).
+pub fn segment_circle_span(
+    x0: f32,
+    y0: f32,
+    x1: f32,
+    y1: f32,
+    cx: f32,
+    cy: f32,
+    radius: f32,
+) -> Option<(f32, f32)> {
+    let dx = x1 - x0;
+    let dy = y1 - y0;
+    let fx = x0 - cx;
+    let fy = y0 - cy;
+    let a = dx * dx + dy * dy;
+    let b = 2.0 * (fx * dx + fy * dy);
+    let c = fx * fx + fy * fy - radius * radius;
+    if a <= 1.0e-8 {
+        return if c <= 0.0 { Some((0.0, 1.0)) } else { None };
+    }
+    let disc = b * b - 4.0 * a * c;
+    if disc < 0.0 {
+        return None;
+    }
+    let s = disc.sqrt();
+    let inv = 0.5 / a;
+    Some(((-b - s) * inv, (-b + s) * inv))
+}
+
+/// Entry `t` where the segment meets a vertical cylinder.
+pub fn segment_cylinder_t(
+    x0: f32,
+    y0: f32,
+    z0: f32,
+    x1: f32,
+    y1: f32,
+    z1: f32,
+    cx: f32,
+    cy: f32,
+    radius: f32,
+    z_min: f32,
+    z_max: f32,
+) -> Option<f32> {
+    earliest_t(
+        segment_circle_span(x0, y0, x1, y1, cx, cy, radius),
+        altitude_span(z0, z1, z_min, z_max),
+    )
+}
+
+/// 2D segment vs extruded obstacles, clipped to a height band.
+#[allow(dead_code)]
 pub fn los_blocked(
     x0: f32,
     y0: f32,
@@ -179,5 +301,26 @@ mod tests {
         let shed = cube(0.0, 3.0);
         assert!(!sightline_blocked(-2.0, 5.0, 4.0, 12.0, 5.0, 0.0, &[shed.clone()]));
         assert!(!sightline_blocked(-2.0, 5.0, 0.0, 12.0, 5.0, 4.0, &[shed]));
+    }
+
+    #[test]
+    fn street_shot_enters_shed_footprint() {
+        let shed = cube(0.0, 3.0);
+        let t = segment_obstacle_t(-2.0, 5.0, 1.0, 12.0, 5.0, 1.0, &shed).unwrap();
+        assert!((t - (2.0 / 14.0)).abs() < 1.0e-3, "t={t}");
+    }
+
+    #[test]
+    fn shot_above_roof_misses_shed() {
+        let shed = cube(0.0, 3.0);
+        assert!(segment_obstacle_t(-2.0, 5.0, 6.0, 12.0, 5.0, 6.0, &shed).is_none());
+    }
+
+    #[test]
+    fn cylinder_entry_is_before_center() {
+        let t = segment_cylinder_t(10.0, 10.0, 1.0, 30.0, 10.0, 1.0, 15.0, 10.0, 0.45, 0.0, 1.8)
+            .unwrap();
+        let x = 10.0 + (30.0 - 10.0) * t;
+        assert!((x - (15.0 - 0.45)).abs() < 1.0e-3, "x={x}");
     }
 }

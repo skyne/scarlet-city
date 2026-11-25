@@ -31,6 +31,9 @@ public sealed class VehicleState
     [JsonPropertyName("speed")]
     public float Speed { get; set; }
 
+    [JsonPropertyName("hp")]
+    public float Hp { get; set; }
+
     [JsonPropertyName("driver_id")]
     public Guid? DriverId { get; set; }
 

@@ -104,6 +104,20 @@ else
         <h1>Scarlet City</h1>
         <p>@Session.Status</p>
         <p>@HudLine()</p>
+        @if (LocalPlayer() is { } me)
+        {
+            <p>armor @me.Armor.ToString("0") · pack @me.Backpack.Count/8 · at risk $@LootRisk(me)</p>
+            <ul class="hud-pack">
+                @foreach (var item in me.Backpack)
+                {
+                    <li><span class="tag">@item.ItemType</span>@item.ItemName</li>
+                }
+                @if (me.Backpack.Count == 0)
+                {
+                    <li class="muted">Backpack empty</li>
+                }
+            </ul>
+        }
         <p>@Session.LastEvent</p>
     </div>
     @if (Session.Debug.Visible)
@@ -176,10 +190,33 @@ Shift brake · F3 debug (+ pred/server ghosts) · F4 profile</div>
 
     string HudLine()
     {
-        var me = Session.Snapshot?.Players.FirstOrDefault(p => p.Id == Session.ActorId);
+        var me = LocalPlayer();
         if (me is null) return "entering city…";
         var ex = me.Extracting ? $" extract {me.ExtractProgress:P0}" : "";
         return $"xyz ({me.X:0.0}, {me.Y:0.0}, {me.Z:0.0}) hp {me.Health:0}{ex}  cash ${Session.Cash}";
+    }
+
+    PlayerState? LocalPlayer() =>
+        Session.Snapshot?.Players.FirstOrDefault(p => p.Id == Session.ActorId);
+
+    static int LootRisk(PlayerState me)
+    {
+        var sum = 0;
+        foreach (var item in me.Backpack)
+        {
+            if (!item.ItemType.Equals("Loot", StringComparison.OrdinalIgnoreCase)) continue;
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(item.StatsJson);
+                if (!doc.RootElement.TryGetProperty("cash_value", out var value)) continue;
+                if (value.TryGetInt32(out var n)) sum += n;
+                else if (value.TryGetDouble(out var d)) sum += (int)d;
+            }
+            catch (System.Text.Json.JsonException)
+            {
+            }
+        }
+        return sum;
     }
 
     public async ValueTask DisposeAsync() => await Session.DisposeAsync();

@@ -1,14 +1,34 @@
 window.ScarletInput = {
   keys: {},
+  // Chromium sends keyup for keys that are still held while the pointer moves.
+  // Keep those keys down until the pointer settles and no keydown reasserts them.
+  suspectRelease: {},
+  lastPointerMove: 0,
   pointer: { x: 0, y: 0, down: false },
   interact: false,
   debugToggle: false,
   profileToggle: false,
   attached: false,
+  notePointer() {
+    this.lastPointerMove = performance.now();
+  },
+  expireSuspects() {
+    const now = performance.now();
+    if (now - this.lastPointerMove < 80) return;
+    for (const code of Object.keys(this.suspectRelease)) {
+      if (now >= this.suspectRelease[code]) {
+        this.keys[code] = false;
+        delete this.suspectRelease[code];
+      }
+    }
+  },
   attach() {
     if (this.attached) return;
     this.attached = true;
     window.addEventListener("keydown", (e) => {
+      // Key repeats while WASD is held starve mousemove in Chromium, so aim
+      // freezes until the key is released. The first keydown is enough.
+      if (e.repeat) return;
       if (e.code === "F3" && !this.keys.F3) {
         this.debugToggle = true;
         e.preventDefault();
@@ -18,20 +38,36 @@ window.ScarletInput = {
         e.preventDefault();
       }
       this.keys[e.code] = true;
+      delete this.suspectRelease[e.code];
       if (e.code === "KeyE") this.interact = true;
-      if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "F3", "F4"].includes(e.code)) e.preventDefault();
-    });
+      if (e.code === "Space" || e.code === "F3" || e.code === "F4") e.preventDefault();
+    }, true);
     window.addEventListener("keyup", (e) => {
+      const now = performance.now();
+      if (now - this.lastPointerMove < 120) {
+        this.suspectRelease[e.code] = now + 160;
+        return;
+      }
       this.keys[e.code] = false;
-    });
-    window.addEventListener("mousemove", (e) => {
+      delete this.suspectRelease[e.code];
+    }, true);
+    const trackPointer = (e) => {
+      this.notePointer();
       this.pointer.x = e.clientX;
       this.pointer.y = e.clientY;
+    };
+    window.addEventListener("mousemove", trackPointer, true);
+    window.addEventListener("pointermove", trackPointer, true);
+    window.addEventListener("mousedown", () => { this.pointer.down = true; }, true);
+    window.addEventListener("mouseup", () => { this.pointer.down = false; }, true);
+    window.addEventListener("blur", () => {
+      this.keys = {};
+      this.suspectRelease = {};
+      this.pointer.down = false;
     });
-    window.addEventListener("mousedown", () => { this.pointer.down = true; });
-    window.addEventListener("mouseup", () => { this.pointer.down = false; });
   },
   poll() {
+    this.expireSuspects();
     const k = this.keys;
     const moveX = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0);
     const moveY = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0);

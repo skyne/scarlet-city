@@ -328,14 +328,19 @@ public sealed class GameSession : IAsyncDisposable
         if (local == null && Snapshot != null)
             local = Snapshot.Players.FirstOrDefault(p => p.Id == ActorId);
 
-        if (Map != null)
-            _camera.Follow(w, h, local, Map);
+        float aimX = 0f, aimY = 0f, aimAngle = 0f;
+        void AimAtPointer(PlayerState? body)
+        {
+            if (Map == null) return;
+            _camera.Follow(w, h, body, Map);
+            var planeZ = body?.Z ?? 0f;
+            _camera.AimWorld(frame.PointerX, frame.PointerY, planeZ, out aimX, out aimY);
+            var originX = body?.X ?? aimX;
+            var originY = body?.Y ?? aimY;
+            aimAngle = MathF.Atan2(aimY - originY, aimX - originX);
+        }
 
-        var planeZ = local?.Z ?? 0f;
-        _camera.AimWorld(frame.PointerX, frame.PointerY, planeZ, out var aimX, out var aimY);
-        var originX = local?.X ?? aimX;
-        var originY = local?.Y ?? aimY;
-        var aimAngle = MathF.Atan2(aimY - originY, aimX - originX);
+        AimAtPointer(local);
 
         var inVehicle = local?.VehicleId != null;
         float moveX = frame.MoveX;
@@ -414,8 +419,7 @@ public sealed class GameSession : IAsyncDisposable
             mark = Stopwatch.GetTimestamp();
             renderSnap = _store.RenderSnapshot(now, aimAngle);
             var drawn = _store.LocalActor(renderSnap);
-            if (drawn != null)
-                _camera.Follow(w, h, drawn, Map);
+            AimAtPointer(drawn ?? local);
             var ghosts = Debug.Visible ? _store.BuildGhosts(now) : null;
             var scene = SceneComposer.Compose(w, h, Map, renderSnap, ActorId, aimX, aimY, aimAngle, ghosts);
             _probe.ComposeMs = MsBetween(mark, Stopwatch.GetTimestamp());

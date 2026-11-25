@@ -187,7 +187,7 @@ public sealed class GameStateStore
 
     static VehicleState CopyVehicleState(VehicleState v) => new()
     {
-        Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, DriverId = v.DriverId
+        Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, Hp = v.Hp, DriverId = v.DriverId
     };
 
     static bool SeqLte(uint a, uint b) => unchecked(b - a) < 1u << 31;
@@ -372,7 +372,7 @@ public sealed class GameStateStore
         Players = s.Players.Select(ClonePlayer).ToList(),
         Vehicles = s.Vehicles.Select(v => new VehicleState
         {
-            Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, DriverId = v.DriverId
+            Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, Hp = v.Hp, DriverId = v.DriverId
         }).ToList(),
         LootNodes = s.LootNodes.Select(n => new LootNode
         {
@@ -386,6 +386,10 @@ public sealed class GameStateStore
         Projectiles = s.Projectiles.Select(p => new Projectile
         {
             Id = p.Id, X = p.X, Y = p.Y, Z = p.Z, Vx = p.Vx, Vy = p.Vy, Vz = p.Vz, OwnerId = p.OwnerId
+        }).ToList(),
+        Impacts = s.Impacts.Select(i => new Impact
+        {
+            X = i.X, Y = i.Y, Z = i.Z, FromX = i.FromX, FromY = i.FromY, FromZ = i.FromZ, HitKind = i.HitKind
         }).ToList()
     };
 
@@ -397,6 +401,8 @@ public sealed class GameStateStore
         X = p.X, Y = p.Y, Z = p.Z, Yaw = p.Yaw,
         Vx = p.Vx, Vy = p.Vy, Vz = p.Vz,
         Health = p.Health,
+        Armor = p.Armor,
+        Backpack = p.Backpack.ToList(),
         VehicleId = p.VehicleId,
         Extracting = p.Extracting,
         ExtractProgress = p.ExtractProgress,

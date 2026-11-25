@@ -3,11 +3,12 @@ use std::collections::{HashMap, VecDeque};
 use uuid::Uuid;
 
 use crate::collision::{
-    blocked_by_map, in_vision_radius, intervals_overlap, los_blocked, point_in_rect, sightline_blocked,
+    blocked_by_map, in_vision_radius, intervals_overlap, point_in_rect, segment_cylinder_t,
+    segment_obstacle_t, sightline_blocked,
 };
 use crate::protocol::{
-    DeathCrate, ExfilZone, LootNode, LootTier, MapData, PlayerState, Projectile, ServerMessage,
-    StashItem, VehicleKind, VehicleState,
+    DeathCrate, ExfilZone, HitKind, Impact, LootNode, LootTier, MapData, PlayerState, Projectile,
+    ServerMessage, StashItem, VehicleKind, VehicleState,
 };
 
 pub const TICK_HZ: u32 = 20;
@@ -33,9 +34,15 @@ const HOVER_TURN: f32 = 2.2;
 
 const PROJECTILE_SPEED: f32 = 48.0;
 const PROJECTILE_LIFE: f32 = 0.9;
-const PROJECTILE_RADIUS: f32 = 0.12;
 const SHOOT_COOLDOWN: f32 = 0.22;
-const INTERACT_RANGE: f32 = 2.4;
+const INTERACT_RANGE: f32 = 2.5;
+const INTERACT_Z: f32 = 2.0;
+const BACKPACK_SLOTS: usize = 8;
+const BACKPACK_MAX_WEIGHT: f32 = 12.0;
+const DEATH_CRATE_TTL_SECS: f32 = 90.0;
+const CAR_HP: f32 = 80.0;
+const HOVER_HP: f32 = 60.0;
+const FRIENDLY_FIRE: bool = false;
 pub const VISION_RADIUS: f32 = 32.0;
 
 #[derive(Clone, Debug, Default)]
@@ -73,6 +80,7 @@ struct Actor {
     vy: f32,
     vz: f32,
     health: f32,
+    armor: f32,
     vehicle_id: Option<Uuid>,
     extract_time: f32,
     input: InputState,
@@ -92,12 +100,24 @@ struct Vehicle {
     yaw: f32,
     vel_yaw: f32,
     speed: f32,
+    hp: f32,
     driver_id: Option<Uuid>,
 }
 
 struct FlyingShot {
     proj: Projectile,
     life: f32,
+    damage: f32,
+}
+
+struct TrackedCrate {
+    data: DeathCrate,
+    age: f32,
+}
+
+enum LootPick {
+    Node(usize),
+    Crate(usize),
 }
 
 pub struct RaidEvent {
@@ -115,8 +135,9 @@ pub struct World {
     actors: HashMap<Uuid, Actor>,
     vehicles: HashMap<Uuid, Vehicle>,
     loot: Vec<LootNode>,
-    death_crates: Vec<DeathCrate>,
+    death_crates: Vec<TrackedCrate>,
     shots: Vec<FlyingShot>,
+    impacts: Vec<Impact>,
     events: Vec<RaidEvent>,
 }
 
@@ -149,6 +170,7 @@ impl World {
                         yaw: s.yaw,
                         vel_yaw: s.yaw,
                         speed: 0.0,
+                        hp: vehicle_max_hp(s.kind),
                         driver_id: None,
                     },
                 )
@@ -163,6 +185,7 @@ impl World {
             loot,
             death_crates: Vec::new(),
             shots: Vec::new(),
+            impacts: Vec::new(),
             events: Vec::new(),
         }
     }
@@ -232,6 +255,7 @@ impl World {
                 vy: 0.0,
                 vz: 0.0,
                 health: 100.0,
+                armor: armor_from_items(&loadout),
                 vehicle_id: None,
                 extract_time: 0.0,
                 input: InputState::default(),
@@ -265,11 +289,21 @@ impl World {
 
     pub fn tick(&mut self) {
         self.tick += 1;
+        self.impacts.clear();
+        self.tick_crates();
         let ids: Vec<Uuid> = self.actors.keys().copied().collect();
         for id in ids {
             self.tick_actor(id);
         }
         self.tick_projectiles();
+    }
+
+    fn tick_crates(&mut self) {
+        for c in &mut self.death_crates {
+            c.age += DT;
+        }
+        self.death_crates
+            .retain(|c| !c.data.items.is_empty() && c.age < DEATH_CRATE_TTL_SECS);
     }
 
     pub fn drain_events(&mut self) -> Vec<RaidEvent> {
@@ -364,6 +398,9 @@ impl World {
         let Some(v) = self.vehicles.get(&vid) else {
             return;
         };
+        if v.hp <= 0.0 {
+            return;
+        }
         let kind = v.kind;
         let (radius, height, accel, max_speed, turn) = match kind {
             VehicleKind::GroundCar => (CAR_RADIUS, CAR_HEIGHT, CAR_ACCEL, CAR_MAX_SPEED, CAR_TURN),
@@ -452,7 +489,36 @@ impl World {
         let Some(p) = self.actors.get(&id) else {
             return;
         };
-        if let Some(vid) = p.vehicle_id {
+        let (px, py, pz) = (p.x, p.y, p.z);
+        let in_vehicle = p.vehicle_id;
+
+        let mut best: Option<(f32, LootPick)> = None;
+        for (idx, node) in self.loot.iter().enumerate() {
+            if node.taken {
+                continue;
+            }
+            if let Some(dist) = interact_dist(px, py, pz, node.x, node.y, node.z) {
+                if best.as_ref().map(|(d, _)| dist < *d).unwrap_or(true) {
+                    best = Some((dist, LootPick::Node(idx)));
+                }
+            }
+        }
+        for (idx, c) in self.death_crates.iter().enumerate() {
+            if c.data.items.is_empty() {
+                continue;
+            }
+            if let Some(dist) = interact_dist(px, py, pz, c.data.x, c.data.y, c.data.z) {
+                if best.as_ref().map(|(d, _)| dist < *d).unwrap_or(true) {
+                    best = Some((dist, LootPick::Crate(idx)));
+                }
+            }
+        }
+        if let Some((_, pick)) = best {
+            self.take_one(id, pick);
+            return;
+        }
+
+        if let Some(vid) = in_vehicle {
             if let Some(v) = self.vehicles.get_mut(&vid) {
                 v.driver_id = None;
             }
@@ -463,59 +529,83 @@ impl World {
             return;
         }
 
-        let (px, py, pz) = (p.x, p.y, p.z);
-        let mut nearest: Option<Uuid> = None;
-        let mut best = INTERACT_RANGE;
+        let mut nearest: Option<(f32, Uuid)> = None;
         for v in self.vehicles.values() {
-            if v.driver_id.is_some() {
+            if v.driver_id.is_some() || v.hp <= 0.0 {
                 continue;
             }
-            let dx = v.x - px;
-            let dy = v.y - py;
-            let dist = (dx * dx + dy * dy).sqrt();
-            let z_ok = (v.z - pz).abs() < 2.5;
-            if dist < best && z_ok {
-                best = dist;
-                nearest = Some(v.id);
+            if let Some(dist) = interact_dist(px, py, pz, v.x, v.y, v.z) {
+                if nearest.as_ref().map(|(d, _)| dist < *d).unwrap_or(true) {
+                    nearest = Some((dist, v.id));
+                }
             }
         }
-        if let Some(vid) = nearest {
+        if let Some((_, vid)) = nearest {
             if let Some(v) = self.vehicles.get_mut(&vid) {
                 v.driver_id = Some(id);
             }
             if let Some(p) = self.actors.get_mut(&id) {
                 p.vehicle_id = Some(vid);
             }
-            return;
         }
+    }
 
-        if let Some(crate_idx) = self.death_crates.iter().position(|c| {
-            let dx = c.x - px;
-            let dy = c.y - py;
-            (dx * dx + dy * dy).sqrt() < INTERACT_RANGE && (c.z - pz).abs() < 2.0
-        }) {
-            let mut crate_items = std::mem::take(&mut self.death_crates[crate_idx].items);
-            if let Some(p) = self.actors.get_mut(&id) {
-                p.backpack.append(&mut crate_items);
+    fn take_one(&mut self, id: Uuid, pick: LootPick) {
+        let item = match pick {
+            LootPick::Crate(idx) => {
+                let Some(c) = self.death_crates.get(idx) else {
+                    return;
+                };
+                let Some(item) = c.data.items.first().cloned() else {
+                    return;
+                };
+                item
             }
-            self.death_crates.remove(crate_idx);
-            return;
-        }
-
-        for node in &mut self.loot {
-            if node.taken {
-                continue;
-            }
-            let dx = node.x - px;
-            let dy = node.y - py;
-            if (dx * dx + dy * dy).sqrt() < INTERACT_RANGE && (node.z - pz).abs() < 2.0 {
-                node.taken = true;
-                let item = loot_to_item(node.tier);
-                if let Some(p) = self.actors.get_mut(&id) {
-                    p.backpack.push(item);
+            LootPick::Node(idx) => {
+                let Some(node) = self.loot.get(idx) else {
+                    return;
+                };
+                if node.taken {
+                    return;
                 }
-                break;
+                loot_to_item(node.tier)
             }
+        };
+        let Some(p) = self.actors.get(&id) else {
+            return;
+        };
+        if !can_stow(&p.backpack, &item) {
+            return;
+        }
+        match pick {
+            LootPick::Crate(idx) => {
+                if let Some(c) = self.death_crates.get_mut(idx) {
+                    if !c.data.items.is_empty() {
+                        c.data.items.remove(0);
+                    }
+                }
+                if self
+                    .death_crates
+                    .get(idx)
+                    .map(|c| c.data.items.is_empty())
+                    .unwrap_or(false)
+                {
+                    self.death_crates.remove(idx);
+                }
+            }
+            LootPick::Node(idx) => {
+                if let Some(node) = self.loot.get_mut(idx) {
+                    node.taken = true;
+                }
+            }
+        }
+        if let Some(p) = self.actors.get_mut(&id) {
+            if item.item_type.eq_ignore_ascii_case("armor") {
+                if let Some(bonus) = stat_f32(&item, "armor") {
+                    p.armor += bonus.max(0.0);
+                }
+            }
+            p.backpack.push(item);
         }
     }
 
@@ -581,12 +671,15 @@ impl World {
             }
         }
         if as_crate && !actor.backpack.is_empty() {
-            self.death_crates.push(DeathCrate {
-                id: Uuid::new_v4(),
-                x: actor.x,
-                y: actor.y,
-                z: actor.z,
-                items: actor.backpack,
+            self.death_crates.push(TrackedCrate {
+                data: DeathCrate {
+                    id: Uuid::new_v4(),
+                    x: actor.x,
+                    y: actor.y,
+                    z: actor.z,
+                    items: actor.backpack,
+                },
+                age: 0.0,
             });
         }
     }
@@ -609,19 +702,7 @@ impl World {
         let ox = p.x + aim.cos() * 0.8;
         let oy = p.y + aim.sin() * 0.8;
         let oz = p.z + 0.9;
-        let tx = p.x + aim.cos() * 40.0;
-        let ty = p.y + aim.sin() * 40.0;
-        if los_blocked(
-            ox,
-            oy,
-            tx,
-            ty,
-            oz - 0.2,
-            oz + 0.2,
-            &self.map.obstacles,
-        ) {
-            // projectile still spawned; dies on first obstacle in flight
-        }
+        let damage = weapon_damage(&p.backpack);
         self.shots.push(FlyingShot {
             proj: Projectile {
                 id: Uuid::new_v4(),
@@ -634,6 +715,7 @@ impl World {
                 owner_id: id,
             },
             life: PROJECTILE_LIFE,
+            damage,
         });
         if let Some(p) = self.actors.get_mut(&id) {
             p.shoot_cd = SHOOT_COOLDOWN;
@@ -641,61 +723,224 @@ impl World {
     }
 
     fn tick_projectiles(&mut self) {
-        let obstacles = &self.map.obstacles;
-        let mut hits: Vec<(Uuid, Uuid)> = Vec::new();
-        for shot in &mut self.shots {
-            shot.life -= DT;
-            let nx = shot.proj.x + shot.proj.vx * DT;
-            let ny = shot.proj.y + shot.proj.vy * DT;
-            let nz = shot.proj.z + shot.proj.vz * DT;
-            if blocked_by_map(
-                nx,
-                ny,
-                PROJECTILE_RADIUS,
-                nz - 0.1,
-                nz + 0.1,
-                obstacles,
-            ) {
-                shot.life = 0.0;
-                continue;
-            }
-            shot.proj.x = nx;
-            shot.proj.y = ny;
-            shot.proj.z = nz;
+        struct ShotHit {
+            t: f32,
+            kind: HitKind,
+            target: Option<Uuid>,
         }
 
-        let actor_snapshot: Vec<(Uuid, f32, f32, f32)> = self
+        let actors: Vec<(Uuid, Uuid, f32, f32, f32, Option<Uuid>)> = self
             .actors
             .values()
-            .map(|p| (p.id, p.x, p.y, p.z))
+            .map(|a| (a.id, a.player_id, a.x, a.y, a.z, a.vehicle_id))
             .collect();
+        let vehicles: Vec<(Uuid, f32, f32, f32, f32, f32)> = self
+            .vehicles
+            .values()
+            .map(|v| {
+                let (radius, height) = vehicle_size(v.kind);
+                (v.id, v.x, v.y, v.z, radius, height)
+            })
+            .collect();
+        let obstacles = self.map.obstacles.clone();
+
+        let mut hits: Vec<Option<ShotHit>> = Vec::with_capacity(self.shots.len());
         for shot in &self.shots {
-            for (pid, x, y, z) in &actor_snapshot {
-                if *pid == shot.proj.owner_id {
+            let x0 = shot.proj.x;
+            let y0 = shot.proj.y;
+            let z0 = shot.proj.z;
+            let x1 = x0 + shot.proj.vx * DT;
+            let y1 = y0 + shot.proj.vy * DT;
+            let z1 = z0 + shot.proj.vz * DT;
+            let owner = shot.proj.owner_id;
+            let owner_player = actors.iter().find(|a| a.0 == owner).map(|a| a.1);
+            let owner_vehicle = actors.iter().find(|a| a.0 == owner).and_then(|a| a.5);
+
+            let mut best_t = f32::MAX;
+            let mut best_rank = u8::MAX;
+            let mut best: Option<ShotHit> = None;
+
+            let consider = |best_t: &mut f32,
+                            best_rank: &mut u8,
+                            best: &mut Option<ShotHit>,
+                            t: f32,
+                            rank: u8,
+                            kind: HitKind,
+                            target: Option<Uuid>| {
+                let closer = t < *best_t - 1.0e-4;
+                let tie = (t - *best_t).abs() <= 1.0e-4 && rank < *best_rank;
+                if closer || tie {
+                    *best_t = t;
+                    *best_rank = rank;
+                    *best = Some(ShotHit { t, kind, target });
+                }
+            };
+
+            for obs in &obstacles {
+                if let Some(t) = segment_obstacle_t(x0, y0, z0, x1, y1, z1, obs) {
+                    consider(&mut best_t, &mut best_rank, &mut best, t, 2, HitKind::Wall, None);
+                }
+            }
+            for (id, vx, vy, vz, radius, height) in &vehicles {
+                if owner_vehicle == Some(*id) {
                     continue;
                 }
-                let dx = shot.proj.x - x;
-                let dy = shot.proj.y - y;
-                let dz = shot.proj.z - (*z + 0.9);
-                if dx * dx + dy * dy < 0.55 * 0.55 && dz.abs() < 1.0 {
-                    hits.push((shot.proj.id, *pid));
+                if let Some(t) = segment_cylinder_t(
+                    x0, y0, z0, x1, y1, z1, *vx, *vy, *radius, *vz, *vz + *height,
+                ) {
+                    consider(
+                        &mut best_t,
+                        &mut best_rank,
+                        &mut best,
+                        t,
+                        1,
+                        HitKind::Vehicle,
+                        Some(*id),
+                    );
                 }
             }
-        }
-        let mut deaths = Vec::new();
-        for (shot_id, pid) in hits {
-            self.shots.retain(|s| s.proj.id != shot_id);
-            if let Some(p) = self.actors.get_mut(&pid) {
-                p.health = (p.health - 18.0).max(0.0);
-                if p.health <= 0.0 {
-                    deaths.push(pid);
+            for (id, player_id, ax, ay, az, _) in &actors {
+                if *id == owner {
+                    continue;
+                }
+                if !FRIENDLY_FIRE && owner_player == Some(*player_id) {
+                    continue;
+                }
+                if let Some(t) = segment_cylinder_t(
+                    x0,
+                    y0,
+                    z0,
+                    x1,
+                    y1,
+                    z1,
+                    *ax,
+                    *ay,
+                    PLAYER_RADIUS,
+                    *az,
+                    *az + PLAYER_HEIGHT,
+                ) {
+                    consider(
+                        &mut best_t,
+                        &mut best_rank,
+                        &mut best,
+                        t,
+                        0,
+                        HitKind::Actor,
+                        Some(*id),
+                    );
                 }
             }
+            hits.push(best);
         }
-        for pid in deaths {
-            self.kill_actor(pid);
+
+        for (index, hit) in hits.into_iter().enumerate() {
+            let Some(hit) = hit else {
+                let shot = &mut self.shots[index];
+                shot.life -= DT;
+                shot.proj.x += shot.proj.vx * DT;
+                shot.proj.y += shot.proj.vy * DT;
+                shot.proj.z += shot.proj.vz * DT;
+                continue;
+            };
+            let damage = self.shots[index].damage;
+            let x0 = self.shots[index].proj.x;
+            let y0 = self.shots[index].proj.y;
+            let z0 = self.shots[index].proj.z;
+            let x1 = x0 + self.shots[index].proj.vx * DT;
+            let y1 = y0 + self.shots[index].proj.vy * DT;
+            let z1 = z0 + self.shots[index].proj.vz * DT;
+            let t = hit.t;
+            let ix = x0 + (x1 - x0) * t;
+            let iy = y0 + (y1 - y0) * t;
+            let iz = z0 + (z1 - z0) * t;
+            self.shots[index].life = 0.0;
+            self.shots[index].proj.x = ix;
+            self.shots[index].proj.y = iy;
+            self.shots[index].proj.z = iz;
+            self.impacts.push(Impact {
+                x: ix,
+                y: iy,
+                z: iz,
+                from_x: x0,
+                from_y: y0,
+                from_z: z0,
+                hit_kind: hit.kind,
+            });
+            match hit.kind {
+                HitKind::Actor => {
+                    if let Some(id) = hit.target {
+                        self.apply_actor_damage(id, damage);
+                    }
+                }
+                HitKind::Vehicle => {
+                    if let Some(id) = hit.target {
+                        self.damage_vehicle(id, damage);
+                    }
+                }
+                HitKind::Wall => {}
+            }
         }
         self.shots.retain(|s| s.life > 0.0);
+    }
+
+    fn apply_actor_damage(&mut self, actor_id: Uuid, damage: f32) {
+        let Some(p) = self.actors.get_mut(&actor_id) else {
+            return;
+        };
+        let absorbed = damage.min(p.armor).max(0.0);
+        p.armor -= absorbed;
+        p.health = (p.health - (damage - absorbed)).max(0.0);
+        let dead = p.health <= 0.0;
+        if dead {
+            self.kill_actor(actor_id);
+        }
+    }
+
+    fn damage_vehicle(&mut self, id: Uuid, damage: f32) {
+        let Some(v) = self.vehicles.get_mut(&id) else {
+            return;
+        };
+        if v.hp <= 0.0 {
+            return;
+        }
+        v.hp = (v.hp - damage).max(0.0);
+        if v.hp > 0.0 {
+            return;
+        }
+        v.speed = 0.0;
+        let driver = v.driver_id.take();
+        let kind = v.kind;
+        let (vx, vy, vz, yaw) = (v.x, v.y, v.z, v.yaw);
+        let (radius, _) = vehicle_size(kind);
+        let Some(driver) = driver else {
+            return;
+        };
+        let ex = vx + yaw.cos() * (radius + PLAYER_RADIUS + 0.35);
+        let ey = vy + yaw.sin() * (radius + PLAYER_RADIUS + 0.35);
+        let (ex, ey) = self.clamp_bounds(ex, ey, PLAYER_RADIUS);
+        let gz = self.map.ground_z;
+        let z = if blocked_by_map(
+            ex,
+            ey,
+            PLAYER_RADIUS,
+            gz,
+            gz + PLAYER_HEIGHT,
+            &self.map.obstacles,
+        ) {
+            vz
+        } else {
+            gz
+        };
+        if let Some(p) = self.actors.get_mut(&driver) {
+            p.vehicle_id = None;
+            p.x = ex;
+            p.y = ey;
+            p.z = z;
+            p.vx = 0.0;
+            p.vy = 0.0;
+            p.vz = 0.0;
+        }
+        self.apply_actor_damage(driver, damage);
     }
 
     fn kill_actor(&mut self, actor_id: Uuid) {
@@ -800,7 +1045,7 @@ impl World {
                 .actors
                 .values()
                 .filter(|a| visible_actor(a))
-                .map(|p| self.actor_state(p))
+                .map(|p| self.actor_state(p, squad_actor_ids.contains(&p.id)))
                 .collect(),
             vehicles: self
                 .vehicles
@@ -820,6 +1065,7 @@ impl World {
                     z: v.z,
                     yaw: v.yaw,
                     speed: v.speed,
+                    hp: v.hp,
                     driver_id: v.driver_id,
                 })
                 .collect(),
@@ -832,8 +1078,8 @@ impl World {
             death_crates: self
                 .death_crates
                 .iter()
-                .filter(|c| visible_point(c.x, c.y, c.z))
-                .cloned()
+                .filter(|c| visible_point(c.data.x, c.data.y, c.data.z))
+                .map(|c| c.data.clone())
                 .collect(),
             exfil_zones: self.map.exfil_zones.clone(),
             projectiles: self
@@ -842,10 +1088,16 @@ impl World {
                 .filter(|s| visible_point(s.proj.x, s.proj.y, s.proj.z))
                 .map(|s| s.proj.clone())
                 .collect(),
+            impacts: self
+                .impacts
+                .iter()
+                .filter(|i| visible_point(i.x, i.y, i.z))
+                .cloned()
+                .collect(),
         }
     }
 
-    fn actor_state(&self, p: &Actor) -> PlayerState {
+    fn actor_state(&self, p: &Actor, include_backpack: bool) -> PlayerState {
         let extracting = p.extract_time > 0.0;
         let zone = self.map.exfil_zones.iter().find(|z| {
             point_in_rect(p.x, p.y, z.x, z.y, z.width, z.depth)
@@ -866,12 +1118,82 @@ impl World {
             vy: p.vy,
             vz: p.vz,
             health: p.health,
+            armor: p.armor,
+            backpack: if include_backpack {
+                p.backpack.clone()
+            } else {
+                Vec::new()
+            },
             vehicle_id: p.vehicle_id,
             extracting,
             extract_progress: progress,
             last_processed_input_seq: p.last_seq,
         }
     }
+}
+
+fn vehicle_size(kind: VehicleKind) -> (f32, f32) {
+    match kind {
+        VehicleKind::GroundCar => (CAR_RADIUS, CAR_HEIGHT),
+        VehicleKind::HoverCraft => (HOVER_RADIUS, HOVER_HEIGHT),
+    }
+}
+
+fn vehicle_max_hp(kind: VehicleKind) -> f32 {
+    match kind {
+        VehicleKind::GroundCar => CAR_HP,
+        VehicleKind::HoverCraft => HOVER_HP,
+    }
+}
+
+fn interact_dist(px: f32, py: f32, pz: f32, x: f32, y: f32, z: f32) -> Option<f32> {
+    let dx = x - px;
+    let dy = y - py;
+    let dist = (dx * dx + dy * dy).sqrt();
+    if dist <= INTERACT_RANGE && (z - pz).abs() <= INTERACT_Z {
+        Some(dist)
+    } else {
+        None
+    }
+}
+
+fn stat_f32(item: &StashItem, key: &str) -> Option<f32> {
+    let v: serde_json::Value = serde_json::from_str(&item.stats_json).ok()?;
+    let n = v.get(key)?;
+    n.as_f64()
+        .map(|x| x as f32)
+        .or_else(|| n.as_i64().map(|x| x as f32))
+}
+
+fn item_weight(item: &StashItem) -> f32 {
+    let w = stat_f32(item, "weight").unwrap_or(1.0).max(0.0);
+    w * item.quantity.max(1) as f32
+}
+
+fn backpack_weight(items: &[StashItem]) -> f32 {
+    // `Iterator::sum` for `f32` uses a -0.0 identity, which serializes as `-0.0`.
+    items.iter().fold(0.0, |acc, item| acc + item_weight(item))
+}
+
+fn can_stow(pack: &[StashItem], item: &StashItem) -> bool {
+    pack.len() < BACKPACK_SLOTS && backpack_weight(pack) + item_weight(item) <= BACKPACK_MAX_WEIGHT + 1.0e-3
+}
+
+fn weapon_damage(backpack: &[StashItem]) -> f32 {
+    backpack
+        .iter()
+        .find(|i| i.item_type.eq_ignore_ascii_case("weapon"))
+        .and_then(|i| stat_f32(i, "damage"))
+        .filter(|d| *d > 0.0)
+        .unwrap_or(18.0)
+}
+
+fn armor_from_items(items: &[StashItem]) -> f32 {
+    items
+        .iter()
+        .filter(|i| i.item_type.eq_ignore_ascii_case("armor"))
+        .filter_map(|i| stat_f32(i, "armor"))
+        .fold(0.0, |acc, a| acc + a.max(0.0))
 }
 
 fn loot_to_item(tier: LootTier) -> StashItem {
@@ -898,4 +1220,313 @@ fn lerp_angle(from: f32, to: f32, t: f32) -> f32 {
         diff += std::f32::consts::TAU;
     }
     from + diff * t
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::protocol::{MapBounds, Obstacle};
+
+    fn wall_map() -> MapData {
+        MapData {
+            name: "t".into(),
+            bounds: MapBounds {
+                x: 0.0,
+                y: 0.0,
+                width: 80.0,
+                depth: 80.0,
+            },
+            ground_z: 0.0,
+            max_altitude: 24.0,
+            roads: vec![],
+            obstacles: vec![Obstacle {
+                id: "shed".into(),
+                x: 12.0,
+                y: 0.0,
+                width: 2.0,
+                depth: 20.0,
+                z_min: 0.0,
+                z_max: 3.0,
+            }],
+            vehicle_spawns: vec![],
+            loot_zones: vec![],
+            exfil_zones: vec![],
+        }
+    }
+
+    fn weapon(damage: i32) -> StashItem {
+        StashItem {
+            id: Uuid::new_v4(),
+            item_type: "Weapon".into(),
+            item_name: "Street Pistol".into(),
+            quantity: 1,
+            stats_json: format!(r#"{{"damage":{damage}}}"#),
+        }
+    }
+
+    fn filler(name: &str) -> StashItem {
+        StashItem {
+            id: Uuid::new_v4(),
+            item_type: "Loot".into(),
+            item_name: name.into(),
+            quantity: 1,
+            stats_json: r#"{"cash_value":10}"#.into(),
+        }
+    }
+
+    fn flying(owner: Uuid, x: f32, y: f32, z: f32, damage: f32) -> FlyingShot {
+        FlyingShot {
+            proj: Projectile {
+                id: Uuid::new_v4(),
+                x,
+                y,
+                z,
+                vx: PROJECTILE_SPEED,
+                vy: 0.0,
+                vz: 0.0,
+                owner_id: owner,
+            },
+            life: PROJECTILE_LIFE,
+            damage,
+        }
+    }
+
+    #[test]
+    fn street_shot_stops_on_shed() {
+        let mut world = World::new(wall_map());
+        world.shots.push(flying(Uuid::new_v4(), 10.0, 10.0, 1.0, 18.0));
+        world.tick_projectiles();
+        assert!(world.shots.is_empty());
+        assert_eq!(world.impacts.len(), 1);
+        assert_eq!(world.impacts[0].hit_kind, HitKind::Wall);
+        assert!(world.impacts[0].x <= 12.05, "x={}", world.impacts[0].x);
+    }
+
+    #[test]
+    fn shot_from_above_clears_low_shed() {
+        let mut world = World::new(wall_map());
+        world.shots.push(flying(Uuid::new_v4(), 10.0, 10.0, 6.0, 18.0));
+        world.tick_projectiles();
+        world.tick_projectiles();
+        assert!(world.impacts.is_empty());
+        assert!(world.shots[0].proj.x > 14.0);
+    }
+
+    #[test]
+    fn closest_actor_wins_over_wall_behind() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("runner".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.x = 11.0;
+            a.y = 10.0;
+            a.z = 0.0;
+        }
+        world.shots.push(flying(Uuid::new_v4(), 10.0, 10.0, 1.0, 18.0));
+        world.tick_projectiles();
+        assert_eq!(world.impacts[0].hit_kind, HitKind::Actor);
+        assert!((world.actors[&id].health - 82.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn same_squad_and_shooter_are_not_damaged() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("runner".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        let ally_player = world.register_squad("same".into(), 2);
+        let ally = world.deploy(ally_player, vec![weapon(18)]).unwrap();
+        {
+            let a = world.actors.get_mut(&ally).unwrap();
+            a.player_id = pid;
+            a.x = 11.0;
+            a.y = 10.0;
+            a.z = 0.0;
+            a.health = 100.0;
+        }
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.x = 10.0;
+            a.y = 10.0;
+            a.health = 40.0;
+        }
+        world.shots.push(flying(id, 10.0, 10.0, 1.0, 18.0));
+        world.tick_projectiles();
+        assert!((world.actors[&ally].health - 100.0).abs() < 0.01);
+        assert!((world.actors[&id].health - 40.0).abs() < 0.01);
+        assert_eq!(world.impacts[0].hit_kind, HitKind::Wall);
+    }
+
+    #[test]
+    fn vehicle_destruction_ejects_driver() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("driver".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        let vid = Uuid::new_v4();
+        world.vehicles.insert(
+            vid,
+            Vehicle {
+                id: vid,
+                kind: VehicleKind::GroundCar,
+                x: 10.0,
+                y: 10.0,
+                z: 0.0,
+                yaw: 0.0,
+                vel_yaw: 0.0,
+                speed: 0.0,
+                hp: 10.0,
+                driver_id: Some(id),
+            },
+        );
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.vehicle_id = Some(vid);
+            a.x = 10.0;
+            a.y = 10.0;
+            a.z = 0.0;
+        }
+        world.shots.push(flying(Uuid::new_v4(), 7.0, 10.0, 0.7, 18.0));
+        world.tick_projectiles();
+        assert!(world.vehicles[&vid].hp <= 0.0);
+        assert!(world.vehicles[&vid].driver_id.is_none());
+        let driver = &world.actors[&id];
+        assert!(driver.vehicle_id.is_none());
+        assert!((driver.health - 82.0).abs() < 0.01);
+        assert!((driver.x - 10.0).abs() > 0.5);
+        assert_eq!(world.impacts[0].hit_kind, HitKind::Vehicle);
+    }
+
+    #[test]
+    fn death_drops_backpack_into_crate() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("runner".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18), filler("cache")]).unwrap();
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.x = 11.0;
+            a.y = 10.0;
+            a.z = 0.0;
+            a.health = 10.0;
+        }
+        world.shots.push(flying(Uuid::new_v4(), 10.0, 10.0, 1.0, 18.0));
+        world.tick_projectiles();
+        assert!(world.actors.get(&id).is_none());
+        assert_eq!(world.death_crates.len(), 1);
+        assert_eq!(world.death_crates[0].data.items.len(), 2);
+        assert_eq!(world.events[0].outcome, "died");
+        assert!(world.events[0].items_banked.is_empty());
+    }
+
+    #[test]
+    fn empty_crate_despawns_and_ninth_item_stays() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("runner".into(), 1);
+        let mut pack: Vec<StashItem> = (0..8).map(|i| filler(&format!("s{i}"))).collect();
+        pack[0] = weapon(18);
+        let id = world.deploy(pid, pack).unwrap();
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.x = 20.0;
+            a.y = 20.0;
+            a.z = 0.0;
+        }
+        world.death_crates.push(TrackedCrate {
+            data: DeathCrate {
+                id: Uuid::new_v4(),
+                x: 21.0,
+                y: 20.0,
+                z: 0.0,
+                items: vec![filler("ninth")],
+            },
+            age: 0.0,
+        });
+        world.try_interact(id);
+        assert_eq!(world.actors[&id].backpack.len(), 8);
+        assert_eq!(world.death_crates.len(), 1);
+        assert_eq!(world.death_crates[0].data.items.len(), 1);
+
+        world.actors.get_mut(&id).unwrap().backpack.pop();
+        world.try_interact(id);
+        assert!(world.death_crates.is_empty());
+        assert_eq!(world.actors[&id].backpack.len(), 8);
+    }
+
+    #[test]
+    fn interact_loots_crate_before_vehicle() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("runner".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.x = 30.0;
+            a.y = 30.0;
+            a.z = 0.0;
+        }
+        let vid = Uuid::new_v4();
+        world.vehicles.insert(
+            vid,
+            Vehicle {
+                id: vid,
+                kind: VehicleKind::GroundCar,
+                x: 31.0,
+                y: 30.0,
+                z: 0.0,
+                yaw: 0.0,
+                vel_yaw: 0.0,
+                speed: 0.0,
+                hp: CAR_HP,
+                driver_id: None,
+            },
+        );
+        world.death_crates.push(TrackedCrate {
+            data: DeathCrate {
+                id: Uuid::new_v4(),
+                x: 31.0,
+                y: 30.0,
+                z: 0.0,
+                items: vec![filler("drop")],
+            },
+            age: 0.0,
+        });
+        world.try_interact(id);
+        assert_eq!(world.actors[&id].backpack.len(), 2);
+        assert!(world.actors[&id].vehicle_id.is_none());
+        assert!(world.vehicles[&vid].driver_id.is_none());
+        assert!(world.death_crates.is_empty());
+    }
+
+    #[test]
+    fn crate_ttl_despawns() {
+        let mut world = World::new(wall_map());
+        world.death_crates.push(TrackedCrate {
+            data: DeathCrate {
+                id: Uuid::new_v4(),
+                x: 5.0,
+                y: 5.0,
+                z: 0.0,
+                items: vec![filler("old")],
+            },
+            age: DEATH_CRATE_TTL_SECS,
+        });
+        world.tick();
+        assert!(world.death_crates.is_empty());
+    }
+
+    #[test]
+    fn armor_absorbs_before_health() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("runner".into(), 1);
+        let id = world.deploy(pid, vec![weapon(30)]).unwrap();
+        assert!(!world.actors[&id].armor.is_sign_negative());
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.armor = 10.0;
+            a.health = 100.0;
+        }
+        world.apply_actor_damage(id, 18.0);
+        let a = &world.actors[&id];
+        assert!((a.armor - 0.0).abs() < 0.01);
+        assert!((a.health - 92.0).abs() < 0.01);
+        assert!((weapon_damage(&a.backpack) - 30.0).abs() < 0.01);
+    }
 }

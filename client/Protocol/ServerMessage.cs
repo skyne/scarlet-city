@@ -72,6 +72,9 @@ public abstract class ServerMessage
         [JsonPropertyName("projectiles")]
         public List<Projectile> Projectiles { get; set; } = new List<Projectile>();
 
+        [JsonPropertyName("impacts")]
+        public List<Impact> Impacts { get; set; } = new List<Impact>();
+
     }
 
     public sealed class RaidEnded : ServerMessage

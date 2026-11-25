@@ -43,6 +43,12 @@ public sealed class PlayerState
     [JsonPropertyName("health")]
     public float Health { get; set; }
 
+    [JsonPropertyName("armor")]
+    public float Armor { get; set; }
+
+    [JsonPropertyName("backpack")]
+    public List<StashItem> Backpack { get; set; } = new List<StashItem>();
+
     [JsonPropertyName("vehicle_id")]
     public Guid? VehicleId { get; set; }
 

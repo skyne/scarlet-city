@@ -19,6 +19,13 @@ pub enum LootTier {
     Epic,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum HitKind {
+    Wall,
+    Vehicle,
+    Actor,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Vec3 {
     pub x: f32,
@@ -133,6 +140,8 @@ pub struct PlayerState {
     pub vy: f32,
     pub vz: f32,
     pub health: f32,
+    pub armor: f32,
+    pub backpack: Vec<StashItem>,
     pub vehicle_id: Option<uuid::Uuid>,
     pub extracting: bool,
     pub extract_progress: f32,
@@ -148,7 +157,19 @@ pub struct VehicleState {
     pub z: f32,
     pub yaw: f32,
     pub speed: f32,
+    pub hp: f32,
     pub driver_id: Option<uuid::Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Impact {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub from_x: f32,
+    pub from_y: f32,
+    pub from_z: f32,
+    pub hit_kind: HitKind,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -231,6 +252,7 @@ pub enum ServerMessage {
         death_crates: Vec<DeathCrate>,
         exfil_zones: Vec<ExfilZone>,
         projectiles: Vec<Projectile>,
+        impacts: Vec<Impact>,
     },
     RaidEnded {
         outcome: String,

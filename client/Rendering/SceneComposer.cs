@@ -108,6 +108,8 @@ public static class SceneComposer
             });
         }
 
+        DrawImpacts(frame, snap, P);
+
         if (ghosts != null)
             DrawNetGhosts(frame, ghosts, P);
 
@@ -119,7 +121,110 @@ public static class SceneComposer
             Fill = "rgba(8,6,8,0.72)"
         });
 
+        DrawInteractPrompt(frame, snap, localId, P);
+
         return frame;
+    }
+
+    const float InteractRange = 2.5f;
+    const float InteractZ = 2.0f;
+
+    static void DrawImpacts(RenderFrame frame, ServerMessage.Snapshot snap, ProjectFn P)
+    {
+        foreach (var hit in snap.Impacts)
+        {
+            var actor = hit.HitKind == HitKind.Actor;
+            var color = actor ? "#ff4d6a" : "#ffe08a";
+            P(hit.FromX, hit.FromY, hit.FromZ, out var ax, out var ay);
+            P(hit.X, hit.Y, hit.Z, out var bx, out var by);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "line",
+                Pts = new[] { ax, ay, bx, by },
+                Stroke = color,
+                Size = 2
+            });
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = actor ? "dot" : "ring",
+                Pts = actor ? new[] { bx, by, 5 } : new[] { bx, by, 7 },
+                Fill = color,
+                Stroke = color,
+                Size = 2
+            });
+        }
+    }
+
+    static void DrawInteractPrompt(RenderFrame frame, ServerMessage.Snapshot snap, Guid localId, ProjectFn P)
+    {
+        var me = snap.Players.FirstOrDefault(p => p.Id == localId);
+        if (me is null) return;
+
+        string? text = null;
+        var px = me.X;
+        var py = me.Y;
+        var pz = me.Z;
+        var best = float.MaxValue;
+
+        void Consider(float x, float y, float z, string label)
+        {
+            var dx = x - me.X;
+            var dy = y - me.Y;
+            var dist = MathF.Sqrt(dx * dx + dy * dy);
+            if (dist <= InteractRange && MathF.Abs(z - me.Z) <= InteractZ && dist < best)
+            {
+                best = dist;
+                text = label;
+                px = x;
+                py = y;
+                pz = z;
+            }
+        }
+
+        foreach (var loot in snap.LootNodes)
+        {
+            if (loot.Taken) continue;
+            Consider(loot.X, loot.Y, loot.Z, "[E] Loot Cache");
+        }
+
+        foreach (var crate in snap.DeathCrates)
+        {
+            var n = crate.Items.Count;
+            if (n == 0) continue;
+            var label = n == 1 ? "[E] Loot Crate (1 item)" : $"[E] Loot Crate ({n} items)";
+            Consider(crate.X, crate.Y, crate.Z, label);
+        }
+
+        if (text is null)
+        {
+            if (me.VehicleId is { } seated)
+            {
+                var car = snap.Vehicles.FirstOrDefault(v => v.Id == seated);
+                text = "[E] Exit Vehicle";
+                px = car?.X ?? me.X;
+                py = car?.Y ?? me.Y;
+                pz = car?.Z ?? me.Z;
+            }
+            else
+            {
+                foreach (var v in snap.Vehicles)
+                {
+                    if (v.DriverId is not null || v.Hp <= 0) continue;
+                    Consider(v.X, v.Y, v.Z, "[E] Enter Vehicle");
+                }
+            }
+        }
+
+        if (text is null) return;
+        P(px, py, pz + 1.6f, out var tx, out var ty);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "text",
+            Pts = new[] { tx, ty },
+            Fill = "#ffe8a3",
+            Text = text,
+            Size = 13
+        });
     }
 
     static void DrawNetGhosts(RenderFrame frame, DebugGhosts g, ProjectFn P)

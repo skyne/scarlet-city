@@ -99,6 +99,22 @@ button.primary:hover:not(:disabled) { background: #e03a40; }
 
 .hud p { margin: 0 0 4px; font-size: 13px; color: #d7c4b4; }
 
+.hud-pack {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  max-width: 260px;
+  background: rgba(12, 8, 9, 0.78);
+  border: 1px solid #5a3034;
+  border-radius: 4px;
+}
+
+.hud-pack li {
+  font-size: 12px;
+  padding: 2px 0;
+  color: #f2d6c6;
+}
+
 #game-canvas {
   display: block;
   width: 100%;
