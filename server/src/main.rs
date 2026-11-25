@@ -56,15 +56,16 @@ async fn main() {
         let mut interval = tokio::time::interval(Duration::from_secs_f32(DT));
         loop {
             interval.tick().await;
-            let events = {
+            let (events, notices) = {
                 let mut world = tick_state.world.lock().await;
                 world.tick();
                 tick_state.tick.store(world.current_tick(), Ordering::Relaxed);
-                world.drain_events()
+                (world.drain_events(), world.drain_notices())
             };
             for ev in events {
                 handle_raid_event(&tick_state, ev).await;
             }
+            broadcast_notices(&tick_state, notices).await;
             broadcast_snapshots(&tick_state).await;
         }
     });
@@ -84,6 +85,30 @@ async fn main() {
     println!("Scarlet City server listening on ws://{addr}/ws");
     let listener = tokio::net::TcpListener::bind(addr).await.expect("bind");
     axum::serve(listener, app).await.expect("serve");
+}
+
+async fn broadcast_notices(state: &AppState, notices: Vec<sim::CityNotice>) {
+    if notices.is_empty() {
+        return;
+    }
+    let listeners = {
+        let world = state.world.lock().await;
+        world.listener_positions()
+    };
+    for notice in notices {
+        for (player_id, x, y) in &listeners {
+            let dx = x - notice.x;
+            let dy = y - notice.y;
+            if dx * dx + dy * dy > notice.hear * notice.hear {
+                continue;
+            }
+            let ev = ServerMessage::Event {
+                kind: notice.kind.clone(),
+                message: notice.message.clone(),
+            };
+            send_to_player(state, *player_id, &ev).await;
+        }
+    }
 }
 
 async fn broadcast_snapshots(state: &AppState) {
@@ -191,6 +216,37 @@ async fn send_profile(
     send_to_player(state, player_id, &msg).await;
 }
 
+async fn send_live_profile(state: &AppState, player_id: Uuid) {
+    let Some(profile_id) = state.world.lock().await.profile_id(player_id) else {
+        return;
+    };
+    let Ok(profile) = db::load_profile(&state.db, profile_id).await else {
+        return;
+    };
+    let (deployed, actor_id, squad_id, controlled) = {
+        let world = state.world.lock().await;
+        let squad = world.squad(player_id);
+        (
+            world.deployed_loadout(player_id),
+            squad.and_then(|s| s.controlled_actor_id),
+            squad.and_then(|s| s.squad_id),
+            squad.and_then(|s| s.controlled_actor_id),
+        )
+    };
+    send_profile(
+        state,
+        player_id,
+        &profile.stash,
+        profile.cash,
+        deployed,
+        actor_id,
+        squad_id,
+        controlled,
+        &roster_members(&profile.crew),
+    )
+    .await;
+}
+
 fn roster_members(crew: &[db::CrewRecord]) -> Vec<CrewMember> {
     crew.iter()
         .map(|c| CrewMember {
@@ -204,6 +260,7 @@ fn roster_members(crew: &[db::CrewRecord]) -> Vec<CrewMember> {
             order_x: 0.0,
             order_y: 0.0,
             order_z: 0.0,
+            appearance: c.appearance.clone(),
         })
         .collect()
 }
@@ -286,33 +343,7 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
             }
             ClientMessage::GetProfile => {
                 let Some(id) = player_id else { continue };
-                let profile_id = state.world.lock().await.profile_id(id);
-                if let Some(pid) = profile_id {
-                    if let Ok(profile) = db::load_profile(&state.db, pid).await {
-                        let (deployed, actor_id, squad_id, controlled) = {
-                            let world = state.world.lock().await;
-                            let squad = world.squad(id);
-                            (
-                                world.deployed_loadout(id),
-                                squad.and_then(|s| s.controlled_actor_id),
-                                squad.and_then(|s| s.squad_id),
-                                squad.and_then(|s| s.controlled_actor_id),
-                            )
-                        };
-                        send_profile(
-                            &state,
-                            id,
-                            &profile.stash,
-                            profile.cash,
-                            deployed,
-                            actor_id,
-                            squad_id,
-                            controlled,
-                            &roster_members(&profile.crew),
-                        )
-                        .await;
-                    }
-                }
+                send_live_profile(&state, id).await;
             }
             ClientMessage::Deploy {
                 loadout_item_ids,
@@ -352,6 +383,7 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                             name: c.name.clone(),
                             role: c.role.clone(),
                             max_hp: c.max_hp,
+                            appearance: c.appearance.clone(),
                         });
                     } else {
                         missing = true;
@@ -439,6 +471,68 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                         let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
                     }
                 }
+            }
+            ClientMessage::SetCrewAppearance { crew_id, appearance } => {
+                let Some(id) = player_id else { continue };
+                let Some(profile_id) = state.world.lock().await.profile_id(id) else {
+                    continue;
+                };
+                let crew = match db::load_crew(&state.db, profile_id).await {
+                    Ok(c) => c,
+                    Err(e) => {
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: format!("crew error: {e}"),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                        continue;
+                    }
+                };
+                let appearance = db::normalize_appearance(&appearance);
+                if !crew.iter().any(|c| c.id == crew_id)
+                    || db::update_crew_appearance(&state.db, profile_id, crew_id, &appearance)
+                        .await
+                        .is_err()
+                {
+                    let ev = ServerMessage::Event {
+                        kind: "error".into(),
+                        message: "could not save appearance".into(),
+                    };
+                    let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    continue;
+                }
+                send_live_profile(&state, id).await;
+            }
+            ClientMessage::SetCrewName { crew_id, name } => {
+                let Some(id) = player_id else { continue };
+                let Some(profile_id) = state.world.lock().await.profile_id(id) else {
+                    continue;
+                };
+                let crew = match db::load_crew(&state.db, profile_id).await {
+                    Ok(c) => c,
+                    Err(e) => {
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: format!("crew error: {e}"),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                        continue;
+                    }
+                };
+                let name = sanitize_name(name);
+                if !crew.iter().any(|c| c.id == crew_id)
+                    || db::update_crew_name(&state.db, profile_id, crew_id, &name)
+                        .await
+                        .is_err()
+                {
+                    let ev = ServerMessage::Event {
+                        kind: "error".into(),
+                        message: "could not save name".into(),
+                    };
+                    let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    continue;
+                }
+                send_live_profile(&state, id).await;
             }
             ClientMessage::SquadOrder {
                 order_type,

@@ -10,3 +10,4 @@ server/game.db-*
 .DS_Store
 *.pdb
 client/Properties/PublishProfiles/
+client/wwwroot/assets/quaternius/

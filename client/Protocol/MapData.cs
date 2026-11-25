@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 using System;
 using System.Collections.Generic;
@@ -36,6 +36,9 @@ public sealed class MapData
 
     [JsonPropertyName("exfil_zones")]
     public List<ExfilZone> ExfilZones { get; set; } = new List<ExfilZone>();
+
+    [JsonPropertyName("heist_sites")]
+    public List<HeistSite> HeistSites { get; set; } = new List<HeistSite>();
 
 }
 

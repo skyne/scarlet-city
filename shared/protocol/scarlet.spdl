@@ -8,7 +8,7 @@
 #   - enums: strings matching variant names
 #   - unions: internally tagged objects, discriminator field "type"
 
-protocol scarlet.city version 3
+protocol scarlet.city version 7
 json tagged "type"
 
 # --- primitives mapped by codegen: f32 f64 u8 u16 u32 u64 i32 i64 bool string uuid ---
@@ -37,6 +37,21 @@ enum LootTier {
   Common
   Rare
   Epic
+}
+
+enum HeistKind {
+  Vault
+  Terminal
+  Cargo
+}
+
+enum HeistState {
+  Locked
+  Ready
+  InProgress
+  Breached
+  Looted
+  Cooldown
 }
 
 enum HitKind {
@@ -101,6 +116,27 @@ struct ExfilZone {
   duration_secs: f32
 }
 
+struct HeistSite {
+  id: string
+  name: string
+  kind: HeistKind
+  x: f32
+  y: f32
+  width: f32
+  depth: f32
+  z_min: f32
+  z_max: f32
+  quiet_x: f32
+  quiet_y: f32
+  quiet_z: f32
+  quiet_secs: f32
+  loud_x: f32
+  loud_y: f32
+  loud_z: f32
+  loud_secs: f32
+  loot_tier: LootTier
+}
+
 struct MapBounds {
   x: f32
   y: f32
@@ -118,6 +154,7 @@ struct MapData {
   vehicle_spawns: VehicleSpawn[]
   loot_zones: LootZone[]
   exfil_zones: ExfilZone[]
+  heist_sites: HeistSite[]
 }
 
 struct StashItem {
@@ -126,6 +163,40 @@ struct StashItem {
   item_name: string
   quantity: u32
   stats_json: string
+}
+
+struct CharacterAppearance {
+  body_set: string
+  hair: string
+  outfit: string
+  beard: bool
+  brows: bool
+  hair_color: string
+  beard_color: string
+  eye_color: string
+  skin_color: string
+  outfit_color: string
+  height: f32
+  head: f32
+  neck: f32
+  shoulders: f32
+  bust: f32
+  waist: f32
+  hips: f32
+  bum: f32
+  muscle: f32
+  arms: f32
+  legs: f32
+  leg_length: f32
+  torso_length: f32
+  slot_top: string
+  slot_bottom: string
+  slot_shoes: string
+  slot_gloves: string
+  slot_head: string
+  slot_shoulder: string
+  slot_belt: string
+  weapon: string
 }
 
 struct CrewMember {
@@ -139,6 +210,7 @@ struct CrewMember {
   order_x: f32
   order_y: f32
   order_z: f32
+  appearance: CharacterAppearance
 }
 
 struct PlayerState {
@@ -162,6 +234,7 @@ struct PlayerState {
   extracting: bool
   extract_progress: f32
   last_processed_input_seq: u32
+  appearance: CharacterAppearance
 }
 
 struct VehicleState {
@@ -174,6 +247,49 @@ struct VehicleState {
   speed: f32
   hp: f32
   driver_id: uuid?
+  law: bool
+}
+
+struct HeistMarker {
+  id: string
+  name: string
+  kind: HeistKind
+  state: HeistState
+  x: f32
+  y: f32
+  z: f32
+  quiet_x: f32
+  quiet_y: f32
+  quiet_z: f32
+  loud_x: f32
+  loud_y: f32
+  loud_z: f32
+  progress: f32
+  approach: string
+  alarm: bool
+  owner_squad: uuid?
+}
+
+struct AlarmPing {
+  id: string
+  x: f32
+  y: f32
+  z: f32
+  radius: f32
+  kind: string
+  intensity: f32
+}
+
+struct NpcState {
+  id: uuid
+  kind: string
+  x: f32
+  y: f32
+  z: f32
+  yaw: f32
+  health: f32
+  alert: bool
+  vehicle_id: uuid?
 }
 
 struct Impact {
@@ -229,6 +345,14 @@ union ClientMessage {
   SwapActor {
     target_actor_id: uuid
   }
+  SetCrewAppearance {
+    crew_id: uuid
+    appearance: CharacterAppearance
+  }
+  SetCrewName {
+    crew_id: uuid
+    name: string
+  }
   SquadOrder {
     order_type: OrderType
     target_actor_id: uuid?
@@ -280,6 +404,11 @@ union ServerMessage {
     exfil_zones: ExfilZone[]
     projectiles: Projectile[]
     impacts: Impact[]
+    heists: HeistMarker[]
+    heat: f32
+    stars: u8
+    alarms: AlarmPing[]
+    npcs: NpcState[]
   }
   RaidEnded {
     outcome: string

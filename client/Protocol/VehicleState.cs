@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 using System;
 using System.Collections.Generic;
@@ -36,6 +36,9 @@ public sealed class VehicleState
 
     [JsonPropertyName("driver_id")]
     public Guid? DriverId { get; set; }
+
+    [JsonPropertyName("law")]
+    public bool Law { get; set; }
 
 }
 

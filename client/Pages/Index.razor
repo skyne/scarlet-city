@@ -49,11 +49,15 @@ else if (Session.Phase == SessionPhase.Hideout)
                     {
                         var on = Session.SelectedCrewIds.Contains(member.ActorId);
                         <li>
-                            <button type="button" class="pick @(on ? "on" : "")" @onclick="() => Session.ToggleCrew(member.ActorId)">
-                                <span class="tag">@member.Role</span>
-                                @member.Name
-                                <span class="qty">@member.MaxHp.ToString("0") hp</span>
-                            </button>
+                            <div class="crew-row">
+                                <button type="button" class="pick @(on ? "on" : "")" @onclick="() => Session.ToggleCrew(member.ActorId)">
+                                    <span class="tag">@member.Role</span>
+                                    @member.Name
+                                    <span class="qty">@member.MaxHp.ToString("0") hp</span>
+                                </button>
+                                <button type="button" class="edit" title="Customize @member.Name"
+                                        @onclick="() => OpenEditor(member.ActorId)">Edit</button>
+                            </div>
                         </li>
                     }
                     @if (Session.Roster.Count == 0)
@@ -91,6 +95,157 @@ else if (Session.Phase == SessionPhase.Hideout)
             </section>
         </div>
     </div>
+    @if (EditingMember is { } editing)
+    {
+        <div class="modal-backdrop">
+            <div class="panel editor">
+                <div class="editor-head">
+                    <h1>Customize @editing.Name</h1>
+                    <button type="button" class="close" @onclick="CloseEditor">×</button>
+                </div>
+                <div class="editor-body">
+                    <div class="crew-preview-wrap">
+                        <canvas id="crew-preview" class="crew-preview"></canvas>
+                        <p class="preview-hint">Drag to rotate</p>
+                    </div>
+                    <div class="editor-fields">
+                        <label>
+                            Callsign
+                            <input value="@_nameDraft" @onchange="CommitName" maxlength="24" />
+                        </label>
+
+                        <p class="editor-label">Body</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.BodySets)
+                            {
+                                <button type="button" class="choice @(CurrentLook.BodySet == option.Id ? "on" : "")"
+                                        @onclick="() => SetBody(option.Id)">@option.Label</button>
+                            }
+                        </div>
+
+                        <p class="editor-label">Hair</p>
+                        <div class="choices">
+                            @foreach (var option in HairChoices())
+                            {
+                                <button type="button" class="choice @(CurrentLook.Hair == option.Id ? "on" : "")"
+                                        @onclick="() => SetHair(option.Id)">@option.Label</button>
+                            }
+                        </div>
+                        <div class="toggles">
+                            @if (CharacterCatalog.CanGrowBeard(CurrentLook.BodySet))
+                            {
+                                <button type="button" class="choice @(CurrentLook.Beard ? "on" : "")" @onclick="ToggleBeard">Beard</button>
+                            }
+                            <button type="button" class="choice @(CurrentLook.Brows ? "on" : "")" @onclick="ToggleBrows">Brows</button>
+                        </div>
+
+                        <p class="editor-label">Hair color</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.HairColors)
+                            {
+                                <button type="button" class="choice color @(CurrentLook.HairColor == option.Id ? "on" : "")"
+                                        style="--swatch:@option.Id" title="@option.Label" @onclick="() => SetHairColor(option.Id)"></button>
+                            }
+                        </div>
+                        @if (CurrentLook.Beard)
+                        {
+                            <p class="editor-label">Beard color</p>
+                            <div class="choices">
+                                @foreach (var option in CharacterCatalog.HairColors)
+                                {
+                                    <button type="button" class="choice color @(CurrentLook.BeardColor == option.Id ? "on" : "")"
+                                            style="--swatch:@option.Id" title="@option.Label" @onclick="() => SetBeardColor(option.Id)"></button>
+                                }
+                            </div>
+                        }
+
+                        <p class="editor-label">Eyes</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.EyeColors)
+                            {
+                                <button type="button" class="choice color @(CurrentLook.EyeColor == option.Id ? "on" : "")"
+                                        style="--swatch:@option.Id" title="@option.Label" @onclick="() => SetEyeColor(option.Id)"></button>
+                            }
+                        </div>
+
+                        <p class="editor-label">Skin</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.SkinColors)
+                            {
+                                <button type="button" class="choice color @(CurrentLook.SkinColor == option.Id ? "on" : "")"
+                                        style="--swatch:@option.Id" title="@option.Label" @onclick="() => SetSkinColor(option.Id)"></button>
+                            }
+                        </div>
+
+                        <p class="editor-label">Outfit</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.OutfitOptions(CurrentLook.BodySet))
+                            {
+                                <button type="button" class="choice @(CurrentLook.Outfit == option.Id ? "on" : "")"
+                                        @onclick="() => SetOutfit(option.Id)">@option.Label</button>
+                            }
+                        </div>
+
+                        <p class="editor-label">Weapon</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.Weapons)
+                            {
+                                <button type="button" class="choice @(CurrentLook.Weapon == option.Id ? "on" : "")"
+                                        @onclick="() => SetWeapon(option.Id)">@option.Label</button>
+                            }
+                        </div>
+
+                        <p class="editor-label">Clothing</p>
+                        <div class="clothing-slots">
+                            @foreach (var slot in CharacterCatalog.ClothingSlots)
+                            {
+                                var selected = CurrentLook.GetSlot(slot.Key);
+                                var selectedLabel = CharacterCatalog.SlotOptions(slot.Key).FirstOrDefault(o => o.Id == selected).Label ?? selected;
+                                <div class="slot-row @(IsSlotOpen(slot.Key) ? "open" : "")">
+                                    <button type="button" class="slot-summary" @onclick="() => ToggleSlot(slot.Key)">
+                                        <span>@slot.Label</span>
+                                        <em>@selectedLabel</em>
+                                    </button>
+                                    @if (IsSlotOpen(slot.Key))
+                                    {
+                                        <div class="slot-options">
+                                            @foreach (var opt in CharacterCatalog.SlotOptions(slot.Key))
+                                            {
+                                                <button type="button" class="@Chip(CurrentLook.GetSlot(slot.Key) == opt.Id)"
+                                                        @onclick="() => SetSlot(slot.Key, opt.Id)">@opt.Label</button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <p class="editor-label">Outfit color</p>
+                        <div class="choices">
+                            @foreach (var option in CharacterCatalog.OutfitColors)
+                            {
+                                <button type="button" class="choice color @(CurrentLook.OutfitColor == option.Id ? "on" : "")"
+                                        style="--swatch:@option.Id" title="@option.Label" @onclick="() => SetOutfitColor(option.Id)"></button>
+                            }
+                        </div>
+
+                        <p class="editor-label">Body shape</p>
+                        <div class="sliders">
+                            @foreach (var slider in CharacterCatalog.Sliders)
+                            {
+                                <label class="slider-row">
+                                    <span>@slider.Label <em>@SliderPct(slider.Key)%</em></span>
+                                    <input type="range" min="0" max="100" step="1"
+                                           value="@SliderPct(slider.Key)"
+                                           @oninput="e => SetSlider(slider.Key, e)" />
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <p class="muted">Changes save automatically to this crew member.</p>
+            </div>
+        </div>
+    }
 }
 else if (Session.Phase == SessionPhase.Summary)
 {
@@ -127,6 +282,15 @@ else
         <h1>Scarlet City</h1>
         <p>@Session.Status</p>
         <p>@HudLine()</p>
+        <p class="heat">@HeatLine()</p>
+        @foreach (var line in HeistLines())
+        {
+            <p class="heist">@line</p>
+        }
+        @foreach (var line in AlarmLines())
+        {
+            <p class="alarm">@line</p>
+        }
         @if (LocalPlayer() is { } me)
         {
             <p>armor @me.Armor.ToString("0") · pack @me.Backpack.Count/8 · at risk $@LootRisk(me)</p>
@@ -180,17 +344,126 @@ else
     </div>
     <div class="help">WASD moves while the mouse aims (W = up the screen) · click shoot
 1–4 or Tab swaps crew · click an AI card, then G cycles Hold / Follow / Engage
-Middle click or Alt+click: move / drive / fly · E enter/loot · Space/C altitude
-Shift brake · F3 debug (pred ghosts, loot respawn timers) · F4 profile</div>
+Middle click or Alt+click: move / drive / fly · E enter/loot · hold E to hack or breach
+Space/C altitude · Shift brake · F3 debug · F4 profile
+Hold E on a blue ring for a quiet hack (rooftop needs a slow hover). Red ring is a loud breach.</div>
 }
 
 @code {
     string _name = $"Runner-{Random.Shared.Next(100, 999)}";
     bool _busy;
+    Guid _editingId;
+    string _nameDraft = "";
+    readonly HashSet<string> _openSlots = new();
+
+    CrewMember? EditingMember => Session.Phase == SessionPhase.Hideout
+        ? Session.Roster.FirstOrDefault(c => c.ActorId == _editingId)
+        : null;
+
+    CharacterAppearance CurrentLook => EditingMember?.Appearance.Normalized() ?? CharacterCatalog.Default;
 
     protected override void OnInitialized()
     {
         _ = Pulse();
+    }
+
+
+
+    IReadOnlyList<(string Id, string Label)> HairChoices() => CharacterCatalog.HairOptions(CurrentLook.BodySet);
+    int SliderPct(string key) => (int)MathF.Round(CurrentLook.GetSlider(key) * 100f);
+
+    void OpenEditor(Guid id)
+    {
+        _editingId = id;
+        _nameDraft = EditingMember?.Name ?? "";
+    }
+
+    void CloseEditor() => _editingId = Guid.Empty;
+
+    async Task SetBody(string bodySet)
+    {
+        var look = CurrentLook.Normalized();
+        look.BodySet = bodySet;
+        look.Hair = CharacterCatalog.HairOptions(bodySet).First().Id;
+        var outfit = CharacterCatalog.OutfitOptions(bodySet).First().Id;
+        look.Outfit = outfit;
+        look.SlotTop = outfit;
+        look.SlotBottom = outfit;
+        look.SlotShoes = outfit;
+        look.SlotGloves = outfit;
+        look.SlotHead = "none";
+        look.SlotShoulder = "none";
+        look.SlotBelt = "none";
+        if (!CharacterCatalog.CanGrowBeard(bodySet)) look.Beard = false;
+        if (bodySet == "female" && look.Bust < 0.45f) look.Bust = 0.5f;
+        if (bodySet == "female" && look.Bum < 0.4f) look.Bum = 0.45f;
+        await SaveLook(look);
+    }
+
+    async Task SetHair(string hair) { var look = CurrentLook.Normalized(); look.Hair = hair; await SaveLook(look); }
+    async Task SetOutfit(string outfit)
+    {
+        var look = CurrentLook.Normalized();
+        look.Outfit = outfit;
+        look.SlotTop = outfit;
+        look.SlotBottom = outfit;
+        look.SlotShoes = outfit;
+        look.SlotGloves = outfit;
+        var accessory = outfit == "ranger" ? "ranger" : "none";
+        look.SlotHead = accessory;
+        look.SlotShoulder = accessory;
+        look.SlotBelt = accessory;
+        await SaveLook(look);
+    }
+    async Task SetWeapon(string weapon) { var look = CurrentLook.Normalized(); look.Weapon = weapon; await SaveLook(look); }
+    async Task ToggleBeard() { var look = CurrentLook.Normalized(); look.Beard = !look.Beard; await SaveLook(look); }
+    async Task ToggleBrows() { var look = CurrentLook.Normalized(); look.Brows = !look.Brows; await SaveLook(look); }
+    async Task SetHairColor(string color) { var look = CurrentLook.Normalized(); look.HairColor = color; look.BeardColor = color; await SaveLook(look); }
+    async Task SetBeardColor(string color) { var look = CurrentLook.Normalized(); look.BeardColor = color; await SaveLook(look); }
+    async Task SetEyeColor(string color) { var look = CurrentLook.Normalized(); look.EyeColor = color; await SaveLook(look); }
+    async Task SetSkinColor(string color) { var look = CurrentLook.Normalized(); look.SkinColor = color; await SaveLook(look); }
+    async Task SetOutfitColor(string color) { var look = CurrentLook.Normalized(); look.OutfitColor = color; await SaveLook(look); }
+
+    async Task SetSlider(string key, ChangeEventArgs e)
+    {
+        if (!float.TryParse(e.Value?.ToString(), out var raw)) return;
+        var look = CurrentLook.Normalized();
+        look.SetSlider(key, raw / 100f);
+        await SaveLook(look);
+    }
+
+    async Task SaveLook(CharacterAppearance look)
+    {
+        if (_editingId != Guid.Empty)
+            await Session.SetCrewAppearanceAsync(_editingId, look);
+    }
+
+    string Chip(bool on) => on ? "pick on" : "pick";
+
+    async Task SetLook(Action<CharacterAppearance> mutate)
+    {
+        var look = CurrentLook.Normalized();
+        mutate(look);
+        await SaveLook(look);
+    }
+
+    async Task SetSlot(string slotKey, string value)
+    {
+        var look = CurrentLook.Normalized();
+        look.SetSlot(slotKey, value);
+        await SaveLook(look);
+    }
+
+    bool IsSlotOpen(string key) => _openSlots.Contains(key);
+    void ToggleSlot(string key) { if (!_openSlots.Remove(key)) _openSlots.Add(key); }
+
+    async Task CommitName(ChangeEventArgs e)
+    {
+        if (_editingId == Guid.Empty) return;
+        var raw = e.Value?.ToString() ?? "";
+        var value = (raw.Length > 24 ? raw[..24] : raw).Trim();
+        _nameDraft = string.IsNullOrEmpty(value) ? "Runner" : value;
+        await Session.SetCrewNameAsync(_editingId, _nameDraft);
     }
 
     async Task Pulse()
@@ -199,6 +472,18 @@ Shift brake · F3 debug (pred ghosts, loot respawn timers) · F4 profile</div>
         {
             await Task.Delay(200);
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (EditingMember is null) return;
+        try
+        {
+            await Js.InvokeVoidAsync("ScarletCharacters.preview", "crew-preview", CurrentLook);
+        }
+        catch (JSException)
+        {
         }
     }
 
@@ -245,6 +530,36 @@ Shift brake · F3 debug (pred ghosts, loot respawn timers) · F4 profile</div>
         if (me is null) return "entering city…";
         var ex = me.Extracting ? $" extract {me.ExtractProgress:P0}" : "";
         return $"xyz ({me.X:0.0}, {me.Y:0.0}, {me.Z:0.0}) hp {me.Health:0}{ex}  cash ${Session.Cash}";
+    }
+
+    string HeatLine()
+    {
+        var snap = Session.Snapshot;
+        if (snap is null) return "Heat —";
+        var stars = new string('★', snap.Stars) + new string('☆', Math.Max(0, 5 - snap.Stars));
+        return $"Heat {stars}  {snap.Heat:0.0}";
+    }
+
+    IEnumerable<string> HeistLines()
+    {
+        var snap = Session.Snapshot;
+        if (snap is null) yield break;
+        foreach (var site in snap.Heists)
+        {
+            var progress = site.State == HeistState.InProgress ? $" {site.Approach} {site.Progress:P0}" : "";
+            var alarm = site.Alarm ? "  ALARM" : "";
+            yield return $"{site.Name}  {site.State}{progress}{alarm}";
+        }
+    }
+
+    IEnumerable<string> AlarmLines()
+    {
+        var snap = Session.Snapshot;
+        if (snap is null) yield break;
+        foreach (var alarm in snap.Alarms.Where(a => a.Kind == "heist"))
+            yield return "Hot zone — heist alarm is audible";
+        if (snap.Alarms.Any(a => a.Kind == "gunfire"))
+            yield return "Shots — unsuppressed gunfire in line of sight";
     }
 
     PlayerState? LocalPlayer() =>

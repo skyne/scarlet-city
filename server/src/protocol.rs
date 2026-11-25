@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 #![allow(dead_code)]
 
@@ -17,6 +17,23 @@ pub enum LootTier {
     Common,
     Rare,
     Epic,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum HeistKind {
+    Vault,
+    Terminal,
+    Cargo,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum HeistState {
+    Locked,
+    Ready,
+    InProgress,
+    Breached,
+    Looted,
+    Cooldown,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -106,6 +123,28 @@ pub struct ExfilZone {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HeistSite {
+    pub id: String,
+    pub name: String,
+    pub kind: HeistKind,
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub depth: f32,
+    pub z_min: f32,
+    pub z_max: f32,
+    pub quiet_x: f32,
+    pub quiet_y: f32,
+    pub quiet_z: f32,
+    pub quiet_secs: f32,
+    pub loud_x: f32,
+    pub loud_y: f32,
+    pub loud_z: f32,
+    pub loud_secs: f32,
+    pub loot_tier: LootTier,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MapBounds {
     pub x: f32,
     pub y: f32,
@@ -124,6 +163,7 @@ pub struct MapData {
     pub vehicle_spawns: Vec<VehicleSpawn>,
     pub loot_zones: Vec<LootZone>,
     pub exfil_zones: Vec<ExfilZone>,
+    pub heist_sites: Vec<HeistSite>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,6 +173,41 @@ pub struct StashItem {
     pub item_name: String,
     pub quantity: u32,
     pub stats_json: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CharacterAppearance {
+    pub body_set: String,
+    pub hair: String,
+    pub outfit: String,
+    pub beard: bool,
+    pub brows: bool,
+    pub hair_color: String,
+    pub beard_color: String,
+    pub eye_color: String,
+    pub skin_color: String,
+    pub outfit_color: String,
+    pub height: f32,
+    pub head: f32,
+    pub neck: f32,
+    pub shoulders: f32,
+    pub bust: f32,
+    pub waist: f32,
+    pub hips: f32,
+    pub bum: f32,
+    pub muscle: f32,
+    pub arms: f32,
+    pub legs: f32,
+    pub leg_length: f32,
+    pub torso_length: f32,
+    pub slot_top: String,
+    pub slot_bottom: String,
+    pub slot_shoes: String,
+    pub slot_gloves: String,
+    pub slot_head: String,
+    pub slot_shoulder: String,
+    pub slot_belt: String,
+    pub weapon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -147,6 +222,7 @@ pub struct CrewMember {
     pub order_x: f32,
     pub order_y: f32,
     pub order_z: f32,
+    pub appearance: CharacterAppearance,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -171,6 +247,7 @@ pub struct PlayerState {
     pub extracting: bool,
     pub extract_progress: f32,
     pub last_processed_input_seq: u32,
+    pub appearance: CharacterAppearance,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -184,6 +261,52 @@ pub struct VehicleState {
     pub speed: f32,
     pub hp: f32,
     pub driver_id: Option<uuid::Uuid>,
+    pub law: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HeistMarker {
+    pub id: String,
+    pub name: String,
+    pub kind: HeistKind,
+    pub state: HeistState,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub quiet_x: f32,
+    pub quiet_y: f32,
+    pub quiet_z: f32,
+    pub loud_x: f32,
+    pub loud_y: f32,
+    pub loud_z: f32,
+    pub progress: f32,
+    pub approach: String,
+    pub alarm: bool,
+    pub owner_squad: Option<uuid::Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AlarmPing {
+    pub id: String,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub radius: f32,
+    pub kind: String,
+    pub intensity: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NpcState {
+    pub id: uuid::Uuid,
+    pub kind: String,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub yaw: f32,
+    pub health: f32,
+    pub alert: bool,
+    pub vehicle_id: Option<uuid::Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -244,6 +367,14 @@ pub enum ClientMessage {
     SwapActor {
         target_actor_id: uuid::Uuid,
     },
+    SetCrewAppearance {
+        crew_id: uuid::Uuid,
+        appearance: CharacterAppearance,
+    },
+    SetCrewName {
+        crew_id: uuid::Uuid,
+        name: String,
+    },
     SquadOrder {
         order_type: OrderType,
         target_actor_id: Option<uuid::Uuid>,
@@ -297,6 +428,11 @@ pub enum ServerMessage {
         exfil_zones: Vec<ExfilZone>,
         projectiles: Vec<Projectile>,
         impacts: Vec<Impact>,
+        heists: Vec<HeistMarker>,
+        heat: f32,
+        stars: u8,
+        alarms: Vec<AlarmPing>,
+        npcs: Vec<NpcState>,
     },
     RaidEnded {
         outcome: String,

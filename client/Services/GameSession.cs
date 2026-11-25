@@ -247,11 +247,16 @@ public sealed class GameSession : IAsyncDisposable
 
     public async Task DeployAsync()
     {
-        if (SelectedCrewIds.Count is < 1 or > 4) return;
+        if (SelectedCrewIds.Count is < 1 or > 4)
+        {
+            LastEvent = "error: select 1 to 4 crew";
+            return;
+        }
         var ids = new List<Guid>();
         if (SelectedWeaponId is { } w) ids.Add(w);
         if (SelectedMedId is { } m) ids.Add(m);
         Guid? join = Guid.TryParse(JoinSquad.Trim(), out var parsed) ? parsed : null;
+        LastEvent = "deploying…";
         await _transport.SendAsync(new ClientMessage.Deploy
         {
             LoadoutItemIds = ids,
@@ -271,6 +276,20 @@ public sealed class GameSession : IAsyncDisposable
         if (SelectedCrewIds.Count >= 4) return;
         SelectedCrewIds.Add(id);
     }
+
+    public async Task SetCrewAppearanceAsync(Guid crewId, CharacterAppearance appearance) =>
+        await _transport.SendAsync(new ClientMessage.SetCrewAppearance
+        {
+            CrewId = crewId,
+            Appearance = appearance.Normalized()
+        });
+
+    public async Task SetCrewNameAsync(Guid crewId, string name) =>
+        await _transport.SendAsync(new ClientMessage.SetCrewName
+        {
+            CrewId = crewId,
+            Name = name
+        });
 
     public void SelectOrderTarget(Guid actorId)
     {
@@ -438,7 +457,7 @@ public sealed class GameSession : IAsyncDisposable
                     Brake = frame.Brake
                 };
                 _latchShoot = frame.Shoot;
-                _latchInteract = false;
+                _latchInteract = frame.Interact;
                 await _transport.SendAsync(new ClientMessage.Input
                 {
                     Seq = pending.Seq,

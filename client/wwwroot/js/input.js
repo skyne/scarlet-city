@@ -28,7 +28,7 @@ window.ScarletInput = {
   uiTarget(e) {
     const t = e.target;
     if (!t || !t.closest) return false;
-    return !!t.closest("button, input, select, textarea, a, .panel");
+    return !!t.closest("button, input, select, textarea, a, .panel, .modal-backdrop, .editor-fields, .slot-row, .slot-summary");
   },
   expireSuspects() {
     const now = performance.now();
@@ -121,7 +121,7 @@ window.ScarletInput = {
     const moveX = (k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0);
     const moveY = (k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0);
     const up = (k.Space ? 1 : 0) - (k.KeyC ? 1 : 0);
-    const interact = this.interact;
+    const interact = this.interact || !!k.KeyE;
     this.interact = false;
     const toggleDebug = this.debugToggle;
     this.debugToggle = false;

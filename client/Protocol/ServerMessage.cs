@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 using System;
 using System.Collections.Generic;
@@ -92,6 +92,21 @@ public abstract class ServerMessage
 
         [JsonPropertyName("impacts")]
         public List<Impact> Impacts { get; set; } = new List<Impact>();
+
+        [JsonPropertyName("heists")]
+        public List<HeistMarker> Heists { get; set; } = new List<HeistMarker>();
+
+        [JsonPropertyName("heat")]
+        public float Heat { get; set; }
+
+        [JsonPropertyName("stars")]
+        public byte Stars { get; set; }
+
+        [JsonPropertyName("alarms")]
+        public List<AlarmPing> Alarms { get; set; } = new List<AlarmPing>();
+
+        [JsonPropertyName("npcs")]
+        public List<NpcState> Npcs { get; set; } = new List<NpcState>();
 
     }
 

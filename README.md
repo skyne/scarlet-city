@@ -43,9 +43,24 @@ In the hideout, pick **1–4** crew (solo, duo, trio, or a full squad). **1–4*
 
 An optional squad id on the deploy screen joins a co-op squad that still has room (four actors total). Each human keeps a distinct body. Swapping only works onto a living crewmate nobody else is controlling. The isometric camera eases over to the new body in about a quarter of a second.
 
+Deploy without a squad id and you share the city with every other crew. You can fight them for a heist bag, or leave them alone.
+
+## Heists, heat, and rival crews
+
+`map_01` has three jobs: **South Block Vault** (rooftop hack or street breach), **East Tower Terminal** (roof terminal or street breach), and **North Warehouse Cargo** (side door or street breach).
+
+- Hold **E** on the blue ring for the quiet approach. Rooftop points need a hovercraft parked slow over the marker. That opens the site without an immediate alarm, then a silent alarm follows.
+- Hold **E** on the red ring for a fast loud breach. That trips the alarm immediately.
+- The finished job drops a **heist bag**. Pick it up and stand on an extraction pad. The bag is heavy loot; dying drops it for whoever is closest.
+- Sites move through Ready, InProgress, Breached, Looted, and Cooldown. After the cooldown the job can be run again.
+
+Heat is per squad, from `0.0` to `5.0` (stars `0`–`5`). Unsuppressed gunfire, loud breaches, vehicle theft, and shooting guards or police push it up. It falls slowly only after the fight ends and no hostile unit can see the crew. Guards patrol the jobs. At two stars and above the server dispatches police cars, then SWAT, toward the last noise or alarm — not through tall cover they cannot see past.
+
+A heist alarm is broadcast as an event and a site marker. Nearby crews hear that the building is hot. Player bodies and gunfire pings still require line of sight, so a tower blocks a wall-hack even when the alarm is audible. The HUD shows heat, each objective, and hot-zone lines. The isometric view marks jobs, alarm rings, hostile units, and police vehicles, with a ground shadow when they are off the street.
+
 ## Architecture
 
-- The server owns physics, altitude, vehicle drift, LOS, loot, extraction, crew roster, character swap, and AI orders (Follow, Hold, Move/Drive/Fly, Engage) at 20 Hz.
+- The server owns physics, altitude, vehicle drift, LOS, loot, extraction, heist state, heat, hostile patrols and police response, crew roster, character swap, and AI orders (Follow, Hold, Move/Drive/Fly, Engage) at 20 Hz.
 - Each profile stores up to four specialists in `game.db` (Point, Driver, Scout, Heavy). Deploy spawns the ones you selected; the rest of a squad is AI until a co-op player takes a body.
 - Overlap in `(x, y)` only blocks when height intervals overlap, so a hovercraft can pass over a low shed and still slam into a tower.
 - The client projects `(x, y, z)` with `screenX = (x - y) * scale`, `screenY = (x + y) * 0.5 * scale - z * zScale`, and draws a ground drop-shadow when `z > 0.01`.

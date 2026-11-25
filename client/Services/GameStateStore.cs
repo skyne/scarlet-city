@@ -200,7 +200,7 @@ public sealed class GameStateStore
 
     static VehicleState CopyVehicleState(VehicleState v) => new()
     {
-        Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, Hp = v.Hp, DriverId = v.DriverId
+        Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, Hp = v.Hp, DriverId = v.DriverId, Law = v.Law
     };
 
     static bool SeqLte(uint a, uint b) => unchecked(b - a) < 1u << 31;
@@ -279,6 +279,7 @@ public sealed class GameStateStore
         LerpPlayers(a, b, t, outSnap);
         LerpVehicles(a, b, t, outSnap);
         LerpProjectiles(a, b, t, outSnap);
+        LerpNpcs(a, b, t, outSnap);
         return outSnap;
     }
 
@@ -306,6 +307,19 @@ public sealed class GameStateStore
             v.Z = Lerp(o.Z, v.Z, t);
             v.Yaw = LerpAngle(o.Yaw, v.Yaw, t);
             v.Speed = Lerp(o.Speed, v.Speed, t);
+        }
+    }
+
+    static void LerpNpcs(ServerMessage.Snapshot a, ServerMessage.Snapshot b, float t, ServerMessage.Snapshot dest)
+    {
+        var prev = a.Npcs.ToDictionary(n => n.Id);
+        foreach (var n in dest.Npcs)
+        {
+            if (!prev.TryGetValue(n.Id, out var o)) continue;
+            n.X = Lerp(o.X, n.X, t);
+            n.Y = Lerp(o.Y, n.Y, t);
+            n.Z = Lerp(o.Z, n.Z, t);
+            n.Yaw = LerpAngle(o.Yaw, n.Yaw, t);
         }
     }
 
@@ -389,6 +403,7 @@ public sealed class GameStateStore
             ActorId = c.ActorId,
             Name = c.Name,
             Role = c.Role,
+            Appearance = c.Appearance,
             Hp = c.Hp,
             MaxHp = c.MaxHp,
             IsAi = c.IsAi,
@@ -400,7 +415,7 @@ public sealed class GameStateStore
         Players = s.Players.Select(ClonePlayer).ToList(),
         Vehicles = s.Vehicles.Select(v => new VehicleState
         {
-            Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, Hp = v.Hp, DriverId = v.DriverId
+            Id = v.Id, Kind = v.Kind, X = v.X, Y = v.Y, Z = v.Z, Yaw = v.Yaw, Speed = v.Speed, Hp = v.Hp, DriverId = v.DriverId, Law = v.Law
         }).ToList(),
         LootNodes = s.LootNodes.Select(n => new LootNode
         {
@@ -418,6 +433,25 @@ public sealed class GameStateStore
         Impacts = s.Impacts.Select(i => new Impact
         {
             X = i.X, Y = i.Y, Z = i.Z, FromX = i.FromX, FromY = i.FromY, FromZ = i.FromZ, HitKind = i.HitKind
+        }).ToList(),
+        Heists = s.Heists.Select(h => new HeistMarker
+        {
+            Id = h.Id, Name = h.Name, Kind = h.Kind, State = h.State,
+            X = h.X, Y = h.Y, Z = h.Z,
+            QuietX = h.QuietX, QuietY = h.QuietY, QuietZ = h.QuietZ,
+            LoudX = h.LoudX, LoudY = h.LoudY, LoudZ = h.LoudZ,
+            Progress = h.Progress, Approach = h.Approach, Alarm = h.Alarm, OwnerSquad = h.OwnerSquad
+        }).ToList(),
+        Heat = s.Heat,
+        Stars = s.Stars,
+        Alarms = s.Alarms.Select(a => new AlarmPing
+        {
+            Id = a.Id, X = a.X, Y = a.Y, Z = a.Z, Radius = a.Radius, Kind = a.Kind, Intensity = a.Intensity
+        }).ToList(),
+        Npcs = s.Npcs.Select(n => new NpcState
+        {
+            Id = n.Id, Kind = n.Kind, X = n.X, Y = n.Y, Z = n.Z, Yaw = n.Yaw,
+            Health = n.Health, Alert = n.Alert, VehicleId = n.VehicleId
         }).ToList()
     };
 
@@ -428,6 +462,7 @@ public sealed class GameStateStore
         SquadId = p.SquadId,
         Name = p.Name,
         Role = p.Role,
+        Appearance = p.Appearance,
         IsAi = p.IsAi,
         X = p.X, Y = p.Y, Z = p.Z, Yaw = p.Yaw,
         Vx = p.Vx, Vy = p.Vy, Vz = p.Vz,

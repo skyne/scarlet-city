@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 using System;
 using System.Collections.Generic;
@@ -13,6 +13,8 @@ namespace ScarletCity.Protocol;
 [JsonDerivedType(typeof(ClientMessage.GetProfile), "GetProfile")]
 [JsonDerivedType(typeof(ClientMessage.Deploy), "Deploy")]
 [JsonDerivedType(typeof(ClientMessage.SwapActor), "SwapActor")]
+[JsonDerivedType(typeof(ClientMessage.SetCrewAppearance), "SetCrewAppearance")]
+[JsonDerivedType(typeof(ClientMessage.SetCrewName), "SetCrewName")]
 [JsonDerivedType(typeof(ClientMessage.SquadOrder), "SquadOrder")]
 [JsonDerivedType(typeof(ClientMessage.Input), "Input")]
 [JsonDerivedType(typeof(ClientMessage.Ping), "Ping")]
@@ -46,6 +48,26 @@ public abstract class ClientMessage
     {
         [JsonPropertyName("target_actor_id")]
         public Guid TargetActorId { get; set; }
+
+    }
+
+    public sealed class SetCrewAppearance : ClientMessage
+    {
+        [JsonPropertyName("crew_id")]
+        public Guid CrewId { get; set; }
+
+        [JsonPropertyName("appearance")]
+        public CharacterAppearance Appearance { get; set; } = null!;
+
+    }
+
+    public sealed class SetCrewName : ClientMessage
+    {
+        [JsonPropertyName("crew_id")]
+        public Guid CrewId { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
 
     }
 

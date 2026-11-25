@@ -47,6 +47,7 @@ public static class SceneComposer
         P(fx, fy, fz, out var playerSx, out var playerSy);
         foreach (var o in buildings)
             DrawBuilding(frame, o, playerSx, playerSy, fx, fy, P);
+        DrawWorldDecor(frame, map, P);
 
         foreach (var zone in snap.ExfilZones)
             DrawSlab(frame, zone.X, zone.Y, zone.Width, zone.Depth, zone.ZMin, zone.ZMax,
@@ -60,15 +61,16 @@ public static class SceneComposer
 
         foreach (var crate in snap.DeathCrates)
         {
+            var heistBag = crate.Items.Any(i => i.StatsJson.Contains("\"heist\":true"));
             MaybeShadow(frame, crate.X, crate.Y, crate.Z, 0.7f, P);
-            DrawEntity(frame, crate.X, crate.Y, crate.Z, 1.1f, 1.1f, 0.9f, "#c9a227", P);
+            DrawEntity(frame, crate.X, crate.Y, crate.Z, 1.1f, 1.1f, 0.9f, heistBag ? "#ffb020" : "#c9a227", P);
             P(crate.X, crate.Y, crate.Z + 1.4f, out var cx, out var cy);
             frame.Ops.Add(new DrawOp
             {
                 Kind = "text",
                 Pts = new[] { cx, cy },
-                Fill = "#ffe8a3",
-                Text = "Death crate",
+                Fill = heistBag ? "#ffd27a" : "#ffe8a3",
+                Text = heistBag ? "Heist bag" : "Death crate",
                 Size = 11
             });
         }
@@ -76,21 +78,69 @@ public static class SceneComposer
         foreach (var v in snap.Vehicles.OrderBy(v => v.X + v.Y).ThenBy(v => v.Z))
         {
             MaybeShadow(frame, v.X, v.Y, v.Z, 1.3f, P);
-            var color = v.Kind == VehicleKind.HoverCraft ? "#6ec8ff" : "#d4553a";
-            DrawEntity(frame, v.X, v.Y, v.Z, 1.8f, 3.2f, 1.1f, color, P);
+            var color = v.Law ? "#7aa2ff" : v.Kind == VehicleKind.HoverCraft ? "#6ec8ff" : "#d4553a";
+            var asset = WorldAssetCatalog.Vehicle(v.Kind, v.Law, v.Id);
+            DrawSprite(frame, asset, v.X, v.Y, v.Z, 3.6f * Scale, 2.5f * Scale, P, alpha: 0.96f);
             DrawFacing(frame, v.X, v.Y, v.Z, v.Yaw, 2.4f, color, P);
         }
 
+        foreach (var npc in snap.Npcs.OrderBy(n => n.X + n.Y).ThenBy(n => n.Z))
+        {
+            MaybeShadow(frame, npc.X, npc.Y, npc.Z, 0.55f, P);
+            var color = npc.Kind switch
+            {
+                "Swat" => "#d5dbe6",
+                "Police" => "#4c8dff",
+                _ => "#e24b5a"
+            };
+            DrawEntity(frame, npc.X, npc.Y, npc.Z, 0.7f, 0.7f, 1.7f, color, P);
+            DrawFacing(frame, npc.X, npc.Y, npc.Z, npc.Yaw, 1.8f, color, P);
+            DrawSprite(frame, WorldAssetCatalog.NpcWeapon(npc.Kind), npc.X, npc.Y, npc.Z + 1.05f,
+                1.8f * Scale, 1.2f * Scale, P, "center", alpha: 0.92f);
+            P(npc.X, npc.Y, npc.Z + 2.15f, out var nx, out var ny);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "text",
+                Pts = new[] { nx, ny },
+                Fill = color,
+                Text = $"{npc.Kind}  {npc.Health:0}",
+                Size = 11
+            });
+        }
+
+        var actors = new List<ActorDraw>();
         foreach (var p in snap.Players.OrderBy(p => p.X + p.Y).ThenBy(p => p.Z))
         {
             MaybeShadow(frame, p.X, p.Y, p.Z, 0.55f, P);
-            var friendly = snap.SquadId is { } sid && sid != Guid.Empty && p.SquadId == sid;
-            var color = p.Id == localId ? "#ffe066" : friendly ? "#7dffa8" : "#ff6b6b";
-            DrawEntity(frame, p.X, p.Y, p.Z, 0.7f, 0.7f, 1.7f, color, P);
             var yaw = p.Id == localId ? clientAimAngle : p.Yaw;
-            DrawFacing(frame, p.X, p.Y, p.Z, yaw, 1.8f, color, P);
+            var speed = MathF.Sqrt(p.Vx * p.Vx + p.Vy * p.Vy);
+            actors.Add(new ActorDraw
+            {
+                Id = p.Id.ToString("N"),
+                X = p.X,
+                Y = p.Y,
+                Z = p.Z,
+                Yaw = yaw,
+                Speed = speed,
+                Variant = p.Appearance.ToVariant(),
+                Appearance = p.Appearance.Normalized()
+            });
             if (p.Id == localId)
                 DrawAim(frame, p.X, p.Y, p.Z, aimWorldX, aimWorldY, yaw, P);
+        }
+
+        // Bodies paint under name labels. Fog is added later and darkens them.
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "actors",
+            Pts = new[] { originX, originY, Scale, ZScale },
+            Actors = actors
+        });
+
+        // Weapons are attached to 3D character hands in characters.js.
+
+        foreach (var p in snap.Players)
+        {
             P(p.X, p.Y, p.Z + 2.1f, out var tx, out var ty);
             frame.Ops.Add(new DrawOp
             {
@@ -127,6 +177,7 @@ public static class SceneComposer
             Fill = "rgba(8,6,8,0.72)"
         });
 
+        DrawHeistSites(frame, snap, P);
         DrawInteractPrompt(frame, snap, localId, P);
 
         if (debug)
@@ -199,6 +250,82 @@ public static class SceneComposer
         }
     }
 
+    static void DrawHeistSites(RenderFrame frame, ServerMessage.Snapshot snap, ProjectFn P)
+    {
+        foreach (var site in snap.Heists)
+        {
+            var color = site.Alarm
+                ? "#ff3355"
+                : site.Kind switch
+                {
+                    HeistKind.Vault => "#f0c14a",
+                    HeistKind.Terminal => "#5ee0ff",
+                    _ => "#ff8a3d"
+                };
+            MaybeShadow(frame, site.X, site.Y, site.Z, 0.9f, P);
+            DrawDiamond(frame, site.X, site.Y, site.Z + 0.4f, color, P);
+            P(site.X, site.Y, site.Z + 2.4f, out var lx, out var ly);
+            var state = site.State.ToString();
+            if (site.State == HeistState.InProgress)
+                state = $"{site.Approach} {site.Progress:P0}";
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "text",
+                Pts = new[] { lx, ly },
+                Fill = color,
+                Text = $"{site.Name}  {state}",
+                Size = 12
+            });
+
+            MaybeShadow(frame, site.QuietX, site.QuietY, site.QuietZ, 0.4f, P);
+            P(site.QuietX, site.QuietY, site.QuietZ + 0.2f, out var qx, out var qy);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "ring",
+                Pts = new[] { qx, qy, 7 },
+                Stroke = "#8fd9ff",
+                Fill = "#8fd9ff",
+                Size = 1.5f
+            });
+            MaybeShadow(frame, site.LoudX, site.LoudY, site.LoudZ, 0.4f, P);
+            P(site.LoudX, site.LoudY, site.LoudZ + 0.2f, out var bx, out var by);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "ring",
+                Pts = new[] { bx, by, 7 },
+                Stroke = "#ff6a4a",
+                Fill = "#ff6a4a",
+                Size = 1.5f
+            });
+        }
+
+        foreach (var alarm in snap.Alarms)
+        {
+            var hot = alarm.Kind == "heist";
+            MaybeShadow(frame, alarm.X, alarm.Y, alarm.Z, 1.1f, P);
+            P(alarm.X, alarm.Y, alarm.Z + 0.3f, out var ax, out var ay);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "ring",
+                Pts = new[] { ax, ay, hot ? 18 : 11 },
+                Stroke = hot ? "#ff3355" : "#ffd166",
+                Fill = hot ? "#ff3355" : "#ffd166",
+                Size = 2
+            });
+            P(alarm.X, alarm.Y, alarm.Z + 2.8f, out var tx, out var ty);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "text",
+                Pts = new[] { tx, ty },
+                Fill = hot ? "#ff8b9a" : "#ffe08a",
+                Text = hot ? "ALARM" : "SHOTS",
+                Size = 12
+            });
+        }
+    }
+
+    static string QuietLabel(HeistMarker site) => site.QuietZ > 2.5f ? "rooftop hack" : "side access";
+
     static void DrawInteractPrompt(RenderFrame frame, ServerMessage.Snapshot snap, Guid localId, ProjectFn P)
     {
         var me = snap.Players.FirstOrDefault(p => p.Id == localId);
@@ -235,8 +362,28 @@ public static class SceneComposer
         {
             var n = crate.Items.Count;
             if (n == 0) continue;
-            var label = n == 1 ? "[E] Loot Crate (1 item)" : $"[E] Loot Crate ({n} items)";
+            var heistBag = crate.Items.Any(i => i.StatsJson.Contains("\"heist\":true"));
+            var label = heistBag
+                ? "[E] Take heist bag"
+                : n == 1 ? "[E] Loot Crate (1 item)" : $"[E] Loot Crate ({n} items)";
             Consider(crate.X, crate.Y, crate.Z, label);
+        }
+
+        if (text is null)
+        {
+            foreach (var site in snap.Heists)
+            {
+                if (site.State is HeistState.Cooldown or HeistState.Looted or HeistState.Breached)
+                    continue;
+                Consider(site.QuietX, site.QuietY, site.QuietZ,
+                    site.State == HeistState.InProgress && site.Approach == "Quiet"
+                        ? $"[Hold E] {site.Name} {site.Progress:P0}"
+                        : $"[Hold E] Quiet {QuietLabel(site)}");
+                Consider(site.LoudX, site.LoudY, site.LoudZ,
+                    site.State == HeistState.InProgress && site.Approach == "Loud"
+                        ? $"[Hold E] Breach {site.Progress:P0}"
+                        : "[Hold E] Loud breach");
+            }
         }
 
         if (text is null)
@@ -348,6 +495,60 @@ public static class SceneComposer
         });
     }
 
+    static void DrawSprite(RenderFrame frame, string? asset, float x, float y, float z,
+        float width, float height, ProjectFn P, string anchor = "bottom", float rotation = 0f, float alpha = 1f)
+    {
+        if (string.IsNullOrEmpty(asset)) return;
+        P(x, y, z, out var sx, out var sy);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "sprite",
+            Pts = new[] { sx, sy, width, height },
+            Asset = asset,
+            Anchor = anchor,
+            Rotation = rotation,
+            Alpha = alpha
+        });
+    }
+
+    static void DrawWorldDecor(RenderFrame frame, MapData map, ProjectFn P)
+    {
+        var streetAssets = new[]
+        {
+            "quaternius/street_pack/streetlight_single",
+            "quaternius/street_pack/trafficlight",
+            "quaternius/street_pack/sign_stop"
+        };
+        var index = 0;
+        foreach (var road in map.Roads)
+        {
+            var horizontal = road.Width >= road.Depth;
+            var length = horizontal ? road.Width : road.Depth;
+            var count = Math.Clamp((int)(length / 28f), 1, 5);
+            for (var i = 0; i < count; i++)
+            {
+                var t = (i + 1f) / (count + 1f);
+                var x = horizontal ? road.X + road.Width * t : road.X - 0.9f;
+                var y = horizontal ? road.Y - 0.9f : road.Y + road.Depth * t;
+                DrawSprite(frame, streetAssets[index++ % streetAssets.Length], x, y, 0f,
+                    1.7f * Scale, 2.5f * Scale, P, alpha: 0.9f);
+            }
+        }
+        var props = new[]
+        {
+            "quaternius/survival_pack/trashcan",
+            "quaternius/cyberpunk_pack/ac",
+            "quaternius/survival_pack/gascan",
+            "kit-cidade/mobiliario/banco_praca"
+        };
+        var propIndex = 0;
+        foreach (var o in map.Obstacles.Where(o => o.ZMax < 10f).Take(8))
+        {
+            DrawSprite(frame, props[propIndex++ % props.Length], o.X + o.Width + 0.5f,
+                o.Y + o.Depth + 0.5f, 0f, 1.5f * Scale, 1.4f * Scale, P, alpha: 0.85f);
+        }
+    }
+
     static void DrawGround(RenderFrame frame, MapData map, ProjectFn P)
     {
         var b = map.Bounds;
@@ -365,7 +566,14 @@ public static class SceneComposer
             alpha = 1f;
         alpha += (target - alpha) * 0.18f;
         BuildingAlpha[o.Id] = alpha;
-        DrawBox(frame, o.X, o.Y, o.Width, o.Depth, o.ZMin, o.ZMax, top, P, alpha);
+        DrawBox(frame, o.X, o.Y, o.Width, o.Depth, o.ZMin, o.ZMax, top, P, alpha * 0.32f);
+        var asset = WorldAssetCatalog.Building(o.Id);
+        if (asset is null) return;
+        var span = o.Width + o.Depth;
+        DrawSprite(frame, asset, o.X + o.Width * 0.5f, o.Y + o.Depth * 0.5f, o.ZMin,
+            span * Scale * 0.62f,
+            span * Scale * 0.52f + (o.ZMax - o.ZMin) * ZScale * 0.85f,
+            P, alpha: alpha);
     }
 
     static bool BuildingOccludesPlayer(Obstacle o, float psx, float psy, float px, float py, ProjectFn P)

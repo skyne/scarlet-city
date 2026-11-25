@@ -70,6 +70,20 @@ window.ScarletIso = {
         ctx.font = `${op.size || 12}px sans-serif`;
         ctx.textAlign = "center";
         ctx.fillText(op.text || "", op.pts[0], op.pts[1]);
+      } else if (op.kind === "actors") {
+        ctx.globalAlpha = 1;
+        if (window.ScarletCharacters) window.ScarletCharacters.render(ctx, this.canvas, op);
+      } else if (op.kind === "sprite") {
+        const img = window.ScarletWorldAssets && window.ScarletWorldAssets.get(op.asset || op.text);
+        if (img) {
+          const [x, y, w, h] = op.pts;
+          const anchor = op.anchor === "center" ? 0.5 : 1;
+          ctx.save();
+          ctx.translate(x, y);
+          if (op.rotation) ctx.rotate(op.rotation);
+          ctx.drawImage(img, -w * 0.5, -h * anchor, w, h);
+          ctx.restore();
+        }
       } else if (op.kind === "fow") {
         ctx.globalAlpha = 1;
         const [x, y, rx, ry] = op.pts;

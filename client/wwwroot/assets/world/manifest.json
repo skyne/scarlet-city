@@ -1,0 +1,2798 @@
+{
+  "assets": {
+    "kit-cidade/agua/barragem_subterranea": {
+      "category": "props",
+      "label": "Barragem Subterranea",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/barragem_subterranea.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/barragem_subterranea.glb",
+      "sprite": "kit-cidade__agua__barragem_subterranea.png"
+    },
+    "kit-cidade/agua/bomba_agua": {
+      "category": "props",
+      "label": "Bomba Agua",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/bomba_agua.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/bomba_agua.glb",
+      "sprite": "kit-cidade__agua__bomba_agua.png"
+    },
+    "kit-cidade/agua/caixa_dagua": {
+      "category": "props",
+      "label": "Caixa Dagua",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/caixa_dagua.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/caixa_dagua.glb",
+      "sprite": "kit-cidade__agua__caixa_dagua.png"
+    },
+    "kit-cidade/agua/centro_controle_perdas": {
+      "category": "props",
+      "label": "Centro Controle Perdas",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/centro_controle_perdas.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/centro_controle_perdas.glb",
+      "sprite": "kit-cidade__agua__centro_controle_perdas.png"
+    },
+    "kit-cidade/agua/centro_pesquisa_agua": {
+      "category": "props",
+      "label": "Centro Pesquisa Agua",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/centro_pesquisa_agua.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/centro_pesquisa_agua.glb",
+      "sprite": "kit-cidade__agua__centro_pesquisa_agua.png"
+    },
+    "kit-cidade/agua/estacao_filtragem": {
+      "category": "props",
+      "label": "Estacao Filtragem",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/estacao_filtragem.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/estacao_filtragem.glb",
+      "sprite": "kit-cidade__agua__estacao_filtragem.png"
+    },
+    "kit-cidade/agua/estacao_monitoramento": {
+      "category": "props",
+      "label": "Estacao Monitoramento",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/estacao_monitoramento.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/estacao_monitoramento.glb",
+      "sprite": "kit-cidade__agua__estacao_monitoramento.png"
+    },
+    "kit-cidade/agua/eta": {
+      "category": "props",
+      "label": "Eta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/eta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/eta.glb",
+      "sprite": "kit-cidade__agua__eta.png"
+    },
+    "kit-cidade/agua/ete": {
+      "category": "props",
+      "label": "Ete",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/ete.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/ete.glb",
+      "sprite": "kit-cidade__agua__ete.png"
+    },
+    "kit-cidade/agua/jardim_chuva": {
+      "category": "props",
+      "label": "Jardim Chuva",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/jardim_chuva.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/jardim_chuva.glb",
+      "sprite": "kit-cidade__agua__jardim_chuva.png"
+    },
+    "kit-cidade/agua/jardim_flutuante": {
+      "category": "props",
+      "label": "Jardim Flutuante",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/jardim_flutuante.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/jardim_flutuante.glb",
+      "sprite": "kit-cidade__agua__jardim_flutuante.png"
+    },
+    "kit-cidade/agua/monitor_qualidade_agua": {
+      "category": "props",
+      "label": "Monitor Qualidade Agua",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/monitor_qualidade_agua.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/monitor_qualidade_agua.glb",
+      "sprite": "kit-cidade__agua__monitor_qualidade_agua.png"
+    },
+    "kit-cidade/agua/poco_artesiano": {
+      "category": "props",
+      "label": "Poco Artesiano",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/poco_artesiano.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/poco_artesiano.glb",
+      "sprite": "kit-cidade__agua__poco_artesiano.png"
+    },
+    "kit-cidade/agua/reservatorio": {
+      "category": "props",
+      "label": "Reservatorio",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/reservatorio.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/reservatorio.glb",
+      "sprite": "kit-cidade__agua__reservatorio.png"
+    },
+    "kit-cidade/agua/usina_dessalinizacao": {
+      "category": "props",
+      "label": "Usina Dessalinizacao",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/usina_dessalinizacao.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/usina_dessalinizacao.glb",
+      "sprite": "kit-cidade__agua__usina_dessalinizacao.png"
+    },
+    "kit-cidade/agua/usina_reuso_agua": {
+      "category": "props",
+      "label": "Usina Reuso Agua",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/agua/usina_reuso_agua.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/agua/usina_reuso_agua.glb",
+      "sprite": "kit-cidade__agua__usina_reuso_agua.png"
+    },
+    "kit-cidade/beira_rio/barco_pesca": {
+      "category": "props",
+      "label": "Barco Pesca",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/beira_rio/barco_pesca.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/beira_rio/barco_pesca.glb",
+      "sprite": "kit-cidade__beira_rio__barco_pesca.png"
+    },
+    "kit-cidade/beira_rio/boia_rio": {
+      "category": "props",
+      "label": "Boia Rio",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/beira_rio/boia_rio.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/beira_rio/boia_rio.glb",
+      "sprite": "kit-cidade__beira_rio__boia_rio.png"
+    },
+    "kit-cidade/beira_rio/canoa": {
+      "category": "props",
+      "label": "Canoa",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/beira_rio/canoa.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/beira_rio/canoa.glb",
+      "sprite": "kit-cidade__beira_rio__canoa.png"
+    },
+    "kit-cidade/beira_rio/capivara": {
+      "category": "props",
+      "label": "Capivara",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/beira_rio/capivara.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/beira_rio/capivara.glb",
+      "sprite": "kit-cidade__beira_rio__capivara.png"
+    },
+    "kit-cidade/beira_rio/garca": {
+      "category": "props",
+      "label": "Garca",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/beira_rio/garca.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/beira_rio/garca.glb",
+      "sprite": "kit-cidade__beira_rio__garca.png"
+    },
+    "kit-cidade/beira_rio/trapiche": {
+      "category": "props",
+      "label": "Trapiche",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/beira_rio/trapiche.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/beira_rio/trapiche.glb",
+      "sprite": "kit-cidade__beira_rio__trapiche.png"
+    },
+    "kit-cidade/comercial/banco": {
+      "category": "props",
+      "label": "Banco",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/banco.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/banco.glb",
+      "sprite": "kit-cidade__comercial__banco.png"
+    },
+    "kit-cidade/comercial/escritorio": {
+      "category": "props",
+      "label": "Escritorio",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/escritorio.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/escritorio.glb",
+      "sprite": "kit-cidade__comercial__escritorio.png"
+    },
+    "kit-cidade/comercial/hotel": {
+      "category": "props",
+      "label": "Hotel",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/hotel.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/hotel.glb",
+      "sprite": "kit-cidade__comercial__hotel.png"
+    },
+    "kit-cidade/comercial/loja_esquina": {
+      "category": "props",
+      "label": "Loja Esquina",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/loja_esquina.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/loja_esquina.glb",
+      "sprite": "kit-cidade__comercial__loja_esquina.png"
+    },
+    "kit-cidade/comercial/mercado": {
+      "category": "props",
+      "label": "Mercado",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/mercado.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/mercado.glb",
+      "sprite": "kit-cidade__comercial__mercado.png"
+    },
+    "kit-cidade/comercial/posto_recarga": {
+      "category": "props",
+      "label": "Posto Recarga",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/posto_recarga.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/posto_recarga.glb",
+      "sprite": "kit-cidade__comercial__posto_recarga.png"
+    },
+    "kit-cidade/comercial/restaurante": {
+      "category": "props",
+      "label": "Restaurante",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/restaurante.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/restaurante.glb",
+      "sprite": "kit-cidade__comercial__restaurante.png"
+    },
+    "kit-cidade/comercial/shopping": {
+      "category": "props",
+      "label": "Shopping",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/comercial/shopping.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/comercial/shopping.glb",
+      "sprite": "kit-cidade__comercial__shopping.png"
+    },
+    "kit-cidade/energia/biodigestor": {
+      "category": "props",
+      "label": "Biodigestor",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/biodigestor.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/biodigestor.glb",
+      "sprite": "kit-cidade__energia__biodigestor.png"
+    },
+    "kit-cidade/energia/hidreletrica": {
+      "category": "props",
+      "label": "Hidreletrica",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/hidreletrica.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/hidreletrica.glb",
+      "sprite": "kit-cidade__energia__hidreletrica.png"
+    },
+    "kit-cidade/energia/parque_eolico": {
+      "category": "props",
+      "label": "Parque Eolico",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/parque_eolico.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/parque_eolico.glb",
+      "sprite": "kit-cidade__energia__parque_eolico.png"
+    },
+    "kit-cidade/energia/poste_energia": {
+      "category": "props",
+      "label": "Poste Energia",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/poste_energia.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/poste_energia.glb",
+      "sprite": "kit-cidade__energia__poste_energia.png"
+    },
+    "kit-cidade/energia/termeletrica": {
+      "category": "props",
+      "label": "Termeletrica",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/termeletrica.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/termeletrica.glb",
+      "sprite": "kit-cidade__energia__termeletrica.png"
+    },
+    "kit-cidade/energia/usina_biomassa": {
+      "category": "props",
+      "label": "Usina Biomassa",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/usina_biomassa.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/usina_biomassa.glb",
+      "sprite": "kit-cidade__energia__usina_biomassa.png"
+    },
+    "kit-cidade/energia/usina_cana": {
+      "category": "props",
+      "label": "Usina Cana",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/usina_cana.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/usina_cana.glb",
+      "sprite": "kit-cidade__energia__usina_cana.png"
+    },
+    "kit-cidade/energia/usina_carvao": {
+      "category": "props",
+      "label": "Usina Carvao",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/usina_carvao.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/usina_carvao.glb",
+      "sprite": "kit-cidade__energia__usina_carvao.png"
+    },
+    "kit-cidade/energia/usina_mare": {
+      "category": "props",
+      "label": "Usina Mare",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/usina_mare.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/usina_mare.glb",
+      "sprite": "kit-cidade__energia__usina_mare.png"
+    },
+    "kit-cidade/energia/usina_nuclear": {
+      "category": "props",
+      "label": "Usina Nuclear",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/usina_nuclear.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/usina_nuclear.glb",
+      "sprite": "kit-cidade__energia__usina_nuclear.png"
+    },
+    "kit-cidade/energia/usina_solar": {
+      "category": "props",
+      "label": "Usina Solar",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/energia/usina_solar.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/energia/usina_solar.glb",
+      "sprite": "kit-cidade__energia__usina_solar.png"
+    },
+    "kit-cidade/industrial/fabrica": {
+      "category": "props",
+      "label": "Fabrica",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/industrial/fabrica.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/industrial/fabrica.glb",
+      "sprite": "kit-cidade__industrial__fabrica.png"
+    },
+    "kit-cidade/industrial/galpao": {
+      "category": "props",
+      "label": "Galpao",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/industrial/galpao.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/industrial/galpao.glb",
+      "sprite": "kit-cidade__industrial__galpao.png"
+    },
+    "kit-cidade/industrial/oficina": {
+      "category": "props",
+      "label": "Oficina",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/industrial/oficina.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/industrial/oficina.glb",
+      "sprite": "kit-cidade__industrial__oficina.png"
+    },
+    "kit-cidade/industrial/porto": {
+      "category": "props",
+      "label": "Porto",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/industrial/porto.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/industrial/porto.glb",
+      "sprite": "kit-cidade__industrial__porto.png"
+    },
+    "kit-cidade/mobiliario/banco_praca": {
+      "category": "props",
+      "label": "Banco Praca",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/banco_praca.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/banco_praca.glb",
+      "sprite": "kit-cidade__mobiliario__banco_praca.png"
+    },
+    "kit-cidade/mobiliario/barril_chuva": {
+      "category": "props",
+      "label": "Barril Chuva",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/barril_chuva.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/barril_chuva.glb",
+      "sprite": "kit-cidade__mobiliario__barril_chuva.png"
+    },
+    "kit-cidade/mobiliario/bebedouro": {
+      "category": "props",
+      "label": "Bebedouro",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/bebedouro.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/bebedouro.glb",
+      "sprite": "kit-cidade__mobiliario__bebedouro.png"
+    },
+    "kit-cidade/mobiliario/bicicletario": {
+      "category": "props",
+      "label": "Bicicletario",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/bicicletario.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/bicicletario.glb",
+      "sprite": "kit-cidade__mobiliario__bicicletario.png"
+    },
+    "kit-cidade/mobiliario/cerca_madeira": {
+      "category": "props",
+      "label": "Cerca Madeira",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/cerca_madeira.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/cerca_madeira.glb",
+      "sprite": "kit-cidade__mobiliario__cerca_madeira.png"
+    },
+    "kit-cidade/mobiliario/cisterna": {
+      "category": "props",
+      "label": "Cisterna",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/cisterna.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/cisterna.glb",
+      "sprite": "kit-cidade__mobiliario__cisterna.png"
+    },
+    "kit-cidade/mobiliario/hidrante": {
+      "category": "props",
+      "label": "Hidrante",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/hidrante.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/hidrante.glb",
+      "sprite": "kit-cidade__mobiliario__hidrante.png"
+    },
+    "kit-cidade/mobiliario/lixeira": {
+      "category": "props",
+      "label": "Lixeira",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/lixeira.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/lixeira.glb",
+      "sprite": "kit-cidade__mobiliario__lixeira.png"
+    },
+    "kit-cidade/mobiliario/lixeira_seletiva": {
+      "category": "props",
+      "label": "Lixeira Seletiva",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/lixeira_seletiva.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/lixeira_seletiva.glb",
+      "sprite": "kit-cidade__mobiliario__lixeira_seletiva.png"
+    },
+    "kit-cidade/mobiliario/orelhao": {
+      "category": "props",
+      "label": "Orelhao",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/orelhao.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/orelhao.glb",
+      "sprite": "kit-cidade__mobiliario__orelhao.png"
+    },
+    "kit-cidade/mobiliario/parquinho": {
+      "category": "props",
+      "label": "Parquinho",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/parquinho.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/parquinho.glb",
+      "sprite": "kit-cidade__mobiliario__parquinho.png"
+    },
+    "kit-cidade/mobiliario/placa_educativa": {
+      "category": "props",
+      "label": "Placa Educativa",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/placa_educativa.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/placa_educativa.glb",
+      "sprite": "kit-cidade__mobiliario__placa_educativa.png"
+    },
+    "kit-cidade/mobiliario/placa_pare": {
+      "category": "props",
+      "label": "Placa Pare",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/placa_pare.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/placa_pare.glb",
+      "sprite": "kit-cidade__mobiliario__placa_pare.png"
+    },
+    "kit-cidade/mobiliario/ponto_onibus": {
+      "category": "props",
+      "label": "Ponto Onibus",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/ponto_onibus.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/ponto_onibus.glb",
+      "sprite": "kit-cidade__mobiliario__ponto_onibus.png"
+    },
+    "kit-cidade/mobiliario/poste_luz": {
+      "category": "props",
+      "label": "Poste Luz",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/poste_luz.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/poste_luz.glb",
+      "sprite": "kit-cidade__mobiliario__poste_luz.png"
+    },
+    "kit-cidade/mobiliario/poste_solar": {
+      "category": "props",
+      "label": "Poste Solar",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/poste_solar.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/poste_solar.glb",
+      "sprite": "kit-cidade__mobiliario__poste_solar.png"
+    },
+    "kit-cidade/mobiliario/quiosque": {
+      "category": "props",
+      "label": "Quiosque",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/quiosque.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/quiosque.glb",
+      "sprite": "kit-cidade__mobiliario__quiosque.png"
+    },
+    "kit-cidade/mobiliario/semaforo": {
+      "category": "props",
+      "label": "Semaforo",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/semaforo.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/semaforo.glb",
+      "sprite": "kit-cidade__mobiliario__semaforo.png"
+    },
+    "kit-cidade/mobiliario/semaforo_pedestre": {
+      "category": "props",
+      "label": "Semaforo Pedestre",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/semaforo_pedestre.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/semaforo_pedestre.glb",
+      "sprite": "kit-cidade__mobiliario__semaforo_pedestre.png"
+    },
+    "kit-cidade/mobiliario/vaso_planta": {
+      "category": "props",
+      "label": "Vaso Planta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/mobiliario/vaso_planta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/mobiliario/vaso_planta.glb",
+      "sprite": "kit-cidade__mobiliario__vaso_planta.png"
+    },
+    "kit-cidade/parques/ecoparque": {
+      "category": "props",
+      "label": "Ecoparque",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/parques/ecoparque.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/parques/ecoparque.glb",
+      "sprite": "kit-cidade__parques__ecoparque.png"
+    },
+    "kit-cidade/parques/parede_verde": {
+      "category": "props",
+      "label": "Parede Verde",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/parques/parede_verde.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/parques/parede_verde.glb",
+      "sprite": "kit-cidade__parques__parede_verde.png"
+    },
+    "kit-cidade/parques/parque": {
+      "category": "props",
+      "label": "Parque",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/parques/parque.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/parques/parque.glb",
+      "sprite": "kit-cidade__parques__parque.png"
+    },
+    "kit-cidade/parques/parque_linear": {
+      "category": "props",
+      "label": "Parque Linear",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/parques/parque_linear.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/parques/parque_linear.glb",
+      "sprite": "kit-cidade__parques__parque_linear.png"
+    },
+    "kit-cidade/parques/telhado_verde": {
+      "category": "props",
+      "label": "Telhado Verde",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/parques/telhado_verde.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/parques/telhado_verde.glb",
+      "sprite": "kit-cidade__parques__telhado_verde.png"
+    },
+    "kit-cidade/publicos/biblioteca": {
+      "category": "props",
+      "label": "Biblioteca",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/biblioteca.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/biblioteca.glb",
+      "sprite": "kit-cidade__publicos__biblioteca.png"
+    },
+    "kit-cidade/publicos/bombeiros": {
+      "category": "props",
+      "label": "Bombeiros",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/bombeiros.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/bombeiros.glb",
+      "sprite": "kit-cidade__publicos__bombeiros.png"
+    },
+    "kit-cidade/publicos/centro_pesquisa": {
+      "category": "props",
+      "label": "Centro Pesquisa",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/centro_pesquisa.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/centro_pesquisa.glb",
+      "sprite": "kit-cidade__publicos__centro_pesquisa.png"
+    },
+    "kit-cidade/publicos/centro_tecnologia": {
+      "category": "props",
+      "label": "Centro Tecnologia",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/centro_tecnologia.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/centro_tecnologia.glb",
+      "sprite": "kit-cidade__publicos__centro_tecnologia.png"
+    },
+    "kit-cidade/publicos/escola": {
+      "category": "props",
+      "label": "Escola",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/escola.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/escola.glb",
+      "sprite": "kit-cidade__publicos__escola.png"
+    },
+    "kit-cidade/publicos/hospital": {
+      "category": "props",
+      "label": "Hospital",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/hospital.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/hospital.glb",
+      "sprite": "kit-cidade__publicos__hospital.png"
+    },
+    "kit-cidade/publicos/monumento": {
+      "category": "props",
+      "label": "Monumento",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/monumento.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/monumento.glb",
+      "sprite": "kit-cidade__publicos__monumento.png"
+    },
+    "kit-cidade/publicos/museu": {
+      "category": "props",
+      "label": "Museu",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/museu.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/museu.glb",
+      "sprite": "kit-cidade__publicos__museu.png"
+    },
+    "kit-cidade/publicos/policia": {
+      "category": "props",
+      "label": "Policia",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/policia.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/policia.glb",
+      "sprite": "kit-cidade__publicos__policia.png"
+    },
+    "kit-cidade/publicos/posto_saude": {
+      "category": "props",
+      "label": "Posto Saude",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/posto_saude.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/posto_saude.glb",
+      "sprite": "kit-cidade__publicos__posto_saude.png"
+    },
+    "kit-cidade/publicos/prefeitura": {
+      "category": "props",
+      "label": "Prefeitura",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/prefeitura.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/prefeitura.glb",
+      "sprite": "kit-cidade__publicos__prefeitura.png"
+    },
+    "kit-cidade/publicos/universidade": {
+      "category": "props",
+      "label": "Universidade",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/publicos/universidade.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/publicos/universidade.glb",
+      "sprite": "kit-cidade__publicos__universidade.png"
+    },
+    "kit-cidade/residencial/casa_simples": {
+      "category": "props",
+      "label": "Casa Simples",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residencial/casa_simples.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residencial/casa_simples.glb",
+      "sprite": "kit-cidade__residencial__casa_simples.png"
+    },
+    "kit-cidade/residencial/casa_sobrado": {
+      "category": "props",
+      "label": "Casa Sobrado",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residencial/casa_sobrado.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residencial/casa_sobrado.glb",
+      "sprite": "kit-cidade__residencial__casa_sobrado.png"
+    },
+    "kit-cidade/residencial/casas_geminadas": {
+      "category": "props",
+      "label": "Casas Geminadas",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residencial/casas_geminadas.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residencial/casas_geminadas.glb",
+      "sprite": "kit-cidade__residencial__casas_geminadas.png"
+    },
+    "kit-cidade/residencial/predio_alto": {
+      "category": "props",
+      "label": "Predio Alto",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residencial/predio_alto.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residencial/predio_alto.glb",
+      "sprite": "kit-cidade__residencial__predio_alto.png"
+    },
+    "kit-cidade/residencial/predio_apartamentos": {
+      "category": "props",
+      "label": "Predio Apartamentos",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residencial/predio_apartamentos.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residencial/predio_apartamentos.glb",
+      "sprite": "kit-cidade__residencial__predio_apartamentos.png"
+    },
+    "kit-cidade/residuos/aterro_sanitario": {
+      "category": "props",
+      "label": "Aterro Sanitario",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residuos/aterro_sanitario.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residuos/aterro_sanitario.glb",
+      "sprite": "kit-cidade__residuos__aterro_sanitario.png"
+    },
+    "kit-cidade/residuos/cooperativa_reciclagem": {
+      "category": "props",
+      "label": "Cooperativa Reciclagem",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residuos/cooperativa_reciclagem.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residuos/cooperativa_reciclagem.glb",
+      "sprite": "kit-cidade__residuos__cooperativa_reciclagem.png"
+    },
+    "kit-cidade/residuos/patio_compostagem": {
+      "category": "props",
+      "label": "Patio Compostagem",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residuos/patio_compostagem.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residuos/patio_compostagem.glb",
+      "sprite": "kit-cidade__residuos__patio_compostagem.png"
+    },
+    "kit-cidade/residuos/ponto_coleta": {
+      "category": "props",
+      "label": "Ponto Coleta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/residuos/ponto_coleta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/residuos/ponto_coleta.glb",
+      "sprite": "kit-cidade__residuos__ponto_coleta.png"
+    },
+    "kit-cidade/ruas/asfalto_cruzamento": {
+      "category": "props",
+      "label": "Asfalto Cruzamento",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/asfalto_cruzamento.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/asfalto_cruzamento.glb",
+      "sprite": "kit-cidade__ruas__asfalto_cruzamento.png"
+    },
+    "kit-cidade/ruas/asfalto_curva": {
+      "category": "props",
+      "label": "Asfalto Curva",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/asfalto_curva.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/asfalto_curva.glb",
+      "sprite": "kit-cidade__ruas__asfalto_curva.png"
+    },
+    "kit-cidade/ruas/asfalto_faixa_pedestre": {
+      "category": "props",
+      "label": "Asfalto Faixa Pedestre",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/asfalto_faixa_pedestre.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/asfalto_faixa_pedestre.glb",
+      "sprite": "kit-cidade__ruas__asfalto_faixa_pedestre.png"
+    },
+    "kit-cidade/ruas/asfalto_ponta": {
+      "category": "props",
+      "label": "Asfalto Ponta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/asfalto_ponta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/asfalto_ponta.glb",
+      "sprite": "kit-cidade__ruas__asfalto_ponta.png"
+    },
+    "kit-cidade/ruas/asfalto_reta": {
+      "category": "props",
+      "label": "Asfalto Reta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/asfalto_reta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/asfalto_reta.glb",
+      "sprite": "kit-cidade__ruas__asfalto_reta.png"
+    },
+    "kit-cidade/ruas/asfalto_t": {
+      "category": "props",
+      "label": "Asfalto T",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/asfalto_t.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/asfalto_t.glb",
+      "sprite": "kit-cidade__ruas__asfalto_t.png"
+    },
+    "kit-cidade/ruas/calcada": {
+      "category": "props",
+      "label": "Calcada",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/calcada.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/calcada.glb",
+      "sprite": "kit-cidade__ruas__calcada.png"
+    },
+    "kit-cidade/ruas/estacionamento": {
+      "category": "props",
+      "label": "Estacionamento",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/estacionamento.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/estacionamento.glb",
+      "sprite": "kit-cidade__ruas__estacionamento.png"
+    },
+    "kit-cidade/ruas/ponte": {
+      "category": "props",
+      "label": "Ponte",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/ponte.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/ponte.glb",
+      "sprite": "kit-cidade__ruas__ponte.png"
+    },
+    "kit-cidade/ruas/praca": {
+      "category": "props",
+      "label": "Praca",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/praca.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/praca.glb",
+      "sprite": "kit-cidade__ruas__praca.png"
+    },
+    "kit-cidade/ruas/terra_curva": {
+      "category": "props",
+      "label": "Terra Curva",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/terra_curva.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/terra_curva.glb",
+      "sprite": "kit-cidade__ruas__terra_curva.png"
+    },
+    "kit-cidade/ruas/terra_reta": {
+      "category": "props",
+      "label": "Terra Reta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/ruas/terra_reta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/ruas/terra_reta.glb",
+      "sprite": "kit-cidade__ruas__terra_reta.png"
+    },
+    "kit-cidade/terreno/agua": {
+      "category": "props",
+      "label": "Agua",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/agua.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/agua.glb",
+      "sprite": "kit-cidade__terreno__agua.png"
+    },
+    "kit-cidade/terreno/areia": {
+      "category": "props",
+      "label": "Areia",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/areia.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/areia.glb",
+      "sprite": "kit-cidade__terreno__areia.png"
+    },
+    "kit-cidade/terreno/arvores_mata": {
+      "category": "props",
+      "label": "Arvores Mata",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/arvores_mata.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/arvores_mata.glb",
+      "sprite": "kit-cidade__terreno__arvores_mata.png"
+    },
+    "kit-cidade/terreno/grama": {
+      "category": "props",
+      "label": "Grama",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/grama.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/grama.glb",
+      "sprite": "kit-cidade__terreno__grama.png"
+    },
+    "kit-cidade/terreno/margem_canto": {
+      "category": "props",
+      "label": "Margem Canto",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/margem_canto.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/margem_canto.glb",
+      "sprite": "kit-cidade__terreno__margem_canto.png"
+    },
+    "kit-cidade/terreno/margem_reta": {
+      "category": "props",
+      "label": "Margem Reta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/margem_reta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/margem_reta.glb",
+      "sprite": "kit-cidade__terreno__margem_reta.png"
+    },
+    "kit-cidade/terreno/morro": {
+      "category": "props",
+      "label": "Morro",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/morro.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/morro.glb",
+      "sprite": "kit-cidade__terreno__morro.png"
+    },
+    "kit-cidade/terreno/rampa": {
+      "category": "props",
+      "label": "Rampa",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/rampa.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/rampa.glb",
+      "sprite": "kit-cidade__terreno__rampa.png"
+    },
+    "kit-cidade/terreno/terra": {
+      "category": "props",
+      "label": "Terra",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/terreno/terra.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/terreno/terra.glb",
+      "sprite": "kit-cidade__terreno__terra.png"
+    },
+    "kit-cidade/vegetacao/araucaria": {
+      "category": "props",
+      "label": "Araucaria",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/araucaria.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/araucaria.glb",
+      "sprite": "kit-cidade__vegetacao__araucaria.png"
+    },
+    "kit-cidade/vegetacao/arbustos": {
+      "category": "props",
+      "label": "Arbustos",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/arbustos.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/arbustos.glb",
+      "sprite": "kit-cidade__vegetacao__arbustos.png"
+    },
+    "kit-cidade/vegetacao/buriti": {
+      "category": "props",
+      "label": "Buriti",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/buriti.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/buriti.glb",
+      "sprite": "kit-cidade__vegetacao__buriti.png"
+    },
+    "kit-cidade/vegetacao/composteira": {
+      "category": "props",
+      "label": "Composteira",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/composteira.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/composteira.glb",
+      "sprite": "kit-cidade__vegetacao__composteira.png"
+    },
+    "kit-cidade/vegetacao/horta": {
+      "category": "props",
+      "label": "Horta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/horta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/horta.glb",
+      "sprite": "kit-cidade__vegetacao__horta.png"
+    },
+    "kit-cidade/vegetacao/ipe_amarelo": {
+      "category": "props",
+      "label": "Ipe Amarelo",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/ipe_amarelo.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/ipe_amarelo.glb",
+      "sprite": "kit-cidade__vegetacao__ipe_amarelo.png"
+    },
+    "kit-cidade/vegetacao/pedras": {
+      "category": "props",
+      "label": "Pedras",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/vegetacao/pedras.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/vegetacao/pedras.glb",
+      "sprite": "kit-cidade__vegetacao__pedras.png"
+    },
+    "kit-cidade/veiculos/ambulancia": {
+      "category": "props",
+      "label": "Ambulancia",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/ambulancia.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/ambulancia.glb",
+      "sprite": "kit-cidade__veiculos__ambulancia.png"
+    },
+    "kit-cidade/veiculos/bicicleta": {
+      "category": "props",
+      "label": "Bicicleta",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/bicicleta.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/bicicleta.glb",
+      "sprite": "kit-cidade__veiculos__bicicleta.png"
+    },
+    "kit-cidade/veiculos/caminhao": {
+      "category": "props",
+      "label": "Caminhao",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/caminhao.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/caminhao.glb",
+      "sprite": "kit-cidade__veiculos__caminhao.png"
+    },
+    "kit-cidade/veiculos/caminhao_bombeiros": {
+      "category": "props",
+      "label": "Caminhao Bombeiros",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/caminhao_bombeiros.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/caminhao_bombeiros.glb",
+      "sprite": "kit-cidade__veiculos__caminhao_bombeiros.png"
+    },
+    "kit-cidade/veiculos/caminhao_lixo": {
+      "category": "props",
+      "label": "Caminhao Lixo",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/caminhao_lixo.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/caminhao_lixo.glb",
+      "sprite": "kit-cidade__veiculos__caminhao_lixo.png"
+    },
+    "kit-cidade/veiculos/caminhao_pipa": {
+      "category": "props",
+      "label": "Caminhao Pipa",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/caminhao_pipa.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/caminhao_pipa.glb",
+      "sprite": "kit-cidade__veiculos__caminhao_pipa.png"
+    },
+    "kit-cidade/veiculos/carro": {
+      "category": "props",
+      "label": "Carro",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/carro.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/carro.glb",
+      "sprite": "kit-cidade__veiculos__carro.png"
+    },
+    "kit-cidade/veiculos/carro_eletrico": {
+      "category": "props",
+      "label": "Carro Eletrico",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/carro_eletrico.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/carro_eletrico.glb",
+      "sprite": "kit-cidade__veiculos__carro_eletrico.png"
+    },
+    "kit-cidade/veiculos/onibus": {
+      "category": "props",
+      "label": "Onibus",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/onibus.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/onibus.glb",
+      "sprite": "kit-cidade__veiculos__onibus.png"
+    },
+    "kit-cidade/veiculos/taxi": {
+      "category": "props",
+      "label": "Taxi",
+      "license": "CC0-1.0",
+      "model": "models/kit-cidade/veiculos/taxi.glb",
+      "source": "https://github.com/kayquer/kit-cidade-lowpoly/blob/main/kit-cidade/veiculos/taxi.glb",
+      "sprite": "kit-cidade__veiculos__taxi.png"
+    },
+    "quaternius/buildings_pack_2/building1_large": {
+      "category": "buildings",
+      "label": "Building1 Large",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building1_Large.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building1_Large.glb",
+      "sprite": "quaternius__buildings_pack_2__building1_large.png"
+    },
+    "quaternius/buildings_pack_2/building1_small": {
+      "category": "buildings",
+      "label": "Building1 Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building1_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building1_Small.glb",
+      "sprite": "quaternius__buildings_pack_2__building1_small.png"
+    },
+    "quaternius/buildings_pack_2/building2_large": {
+      "category": "buildings",
+      "label": "Building2 Large",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building2_Large.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building2_Large.glb",
+      "sprite": "quaternius__buildings_pack_2__building2_large.png"
+    },
+    "quaternius/buildings_pack_2/building2_small": {
+      "category": "buildings",
+      "label": "Building2 Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building2_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building2_Small.glb",
+      "sprite": "quaternius__buildings_pack_2__building2_small.png"
+    },
+    "quaternius/buildings_pack_2/building3_big": {
+      "category": "buildings",
+      "label": "Building3 Big",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building3_Big.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building3_Big.glb",
+      "sprite": "quaternius__buildings_pack_2__building3_big.png"
+    },
+    "quaternius/buildings_pack_2/building3_small": {
+      "category": "buildings",
+      "label": "Building3 Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building3_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building3_Small.glb",
+      "sprite": "quaternius__buildings_pack_2__building3_small.png"
+    },
+    "quaternius/buildings_pack_2/building4": {
+      "category": "buildings",
+      "label": "Building4",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/Building4.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/Building4.glb",
+      "sprite": "quaternius__buildings_pack_2__building4.png"
+    },
+    "quaternius/buildings_pack_2/house1": {
+      "category": "buildings",
+      "label": "House1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/House1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/House1.glb",
+      "sprite": "quaternius__buildings_pack_2__house1.png"
+    },
+    "quaternius/buildings_pack_2/house2": {
+      "category": "buildings",
+      "label": "House2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_2/House2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_2/House2.glb",
+      "sprite": "quaternius__buildings_pack_2__house2.png"
+    },
+    "quaternius/buildings_pack_3/1story_gableroof_mat": {
+      "category": "buildings",
+      "label": "1Story GableRoof Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/1Story_GableRoof_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/1Story_GableRoof_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__1story_gableroof_mat.png"
+    },
+    "quaternius/buildings_pack_3/1story_mat": {
+      "category": "buildings",
+      "label": "1Story Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/1Story_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/1Story_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__1story_mat.png"
+    },
+    "quaternius/buildings_pack_3/1story_roundroof_mat": {
+      "category": "buildings",
+      "label": "1Story RoundRoof Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/1Story_RoundRoof_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/1Story_RoundRoof_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__1story_roundroof_mat.png"
+    },
+    "quaternius/buildings_pack_3/1story_sign_mat": {
+      "category": "buildings",
+      "label": "1Story Sign Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/1Story_Sign_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/1Story_Sign_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__1story_sign_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_2_mat": {
+      "category": "buildings",
+      "label": "2Story 2 Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_2_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_2_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_2_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_balcony_mat": {
+      "category": "buildings",
+      "label": "2Story Balcony Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Balcony_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Balcony_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_balcony_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_center_mat": {
+      "category": "buildings",
+      "label": "2Story Center Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Center_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Center_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_center_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_columns_mat": {
+      "category": "buildings",
+      "label": "2Story Columns Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Columns_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Columns_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_columns_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_double_mat": {
+      "category": "buildings",
+      "label": "2Story Double Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Double_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Double_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_double_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_gableroof_mat": {
+      "category": "buildings",
+      "label": "2Story GableRoof Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_GableRoof_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_GableRoof_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_gableroof_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_mat": {
+      "category": "buildings",
+      "label": "2Story Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_roundroof_mat": {
+      "category": "buildings",
+      "label": "2Story RoundRoof Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_RoundRoof_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_RoundRoof_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_roundroof_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_sidehouse_mat": {
+      "category": "buildings",
+      "label": "2Story Sidehouse Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Sidehouse_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Sidehouse_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_sidehouse_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_sign_mat": {
+      "category": "buildings",
+      "label": "2Story Sign Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Sign_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Sign_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_sign_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_slim_mat": {
+      "category": "buildings",
+      "label": "2Story Slim Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Slim_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Slim_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_slim_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_stairs_mat": {
+      "category": "buildings",
+      "label": "2Story Stairs Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Stairs_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Stairs_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_stairs_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_wide_2doors_mat": {
+      "category": "buildings",
+      "label": "2Story Wide 2Doors Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Wide_2Doors_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Wide_2Doors_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_wide_2doors_mat.png"
+    },
+    "quaternius/buildings_pack_3/2story_wide_mat": {
+      "category": "buildings",
+      "label": "2Story Wide Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/2Story_Wide_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/2Story_Wide_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__2story_wide_mat.png"
+    },
+    "quaternius/buildings_pack_3/3story_balcony_mat": {
+      "category": "buildings",
+      "label": "3Story Balcony Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/3Story_Balcony_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/3Story_Balcony_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__3story_balcony_mat.png"
+    },
+    "quaternius/buildings_pack_3/3story_slim_mat": {
+      "category": "buildings",
+      "label": "3Story Slim Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/3Story_Slim_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/3Story_Slim_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__3story_slim_mat.png"
+    },
+    "quaternius/buildings_pack_3/3story_small_mat": {
+      "category": "buildings",
+      "label": "3Story Small Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/3Story_Small_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/3Story_Small_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__3story_small_mat.png"
+    },
+    "quaternius/buildings_pack_3/4story_center_mat": {
+      "category": "buildings",
+      "label": "4Story Center Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/4Story_Center_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/4Story_Center_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__4story_center_mat.png"
+    },
+    "quaternius/buildings_pack_3/4story_mat": {
+      "category": "buildings",
+      "label": "4Story Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/4Story_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/4Story_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__4story_mat.png"
+    },
+    "quaternius/buildings_pack_3/4story_wide_2doors_mat": {
+      "category": "buildings",
+      "label": "4Story Wide 2Doors Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/4Story_Wide_2Doors_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/4Story_Wide_2Doors_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__4story_wide_2doors_mat.png"
+    },
+    "quaternius/buildings_pack_3/4story_wide_2doors_roof_mat": {
+      "category": "buildings",
+      "label": "4Story Wide 2Doors Roof Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/4Story_Wide_2Doors_Roof_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/4Story_Wide_2Doors_Roof_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__4story_wide_2doors_roof_mat.png"
+    },
+    "quaternius/buildings_pack_3/6story_stack_mat": {
+      "category": "buildings",
+      "label": "6Story Stack Mat",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/buildings_pack_3/6Story_Stack_Mat.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/buildings_pack_3/6Story_Stack_Mat.glb",
+      "sprite": "quaternius__buildings_pack_3__6story_stack_mat.png"
+    },
+    "quaternius/cars/car": {
+      "category": "vehicles",
+      "label": "Car",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/Car.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__car.png"
+    },
+    "quaternius/cars/car_unqqkultru": {
+      "category": "vehicles",
+      "label": "Car-unqqkULtRU",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/Car-unqqkULtRU.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__car_unqqkultru.png"
+    },
+    "quaternius/cars/police_car": {
+      "category": "vehicles",
+      "label": "Police Car",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/Police_Car.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__police_car.png"
+    },
+    "quaternius/cars/sports_car": {
+      "category": "vehicles",
+      "label": "Sports Car",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/Sports_Car.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__sports_car.png"
+    },
+    "quaternius/cars/sports_car_1mkmfkaz5v": {
+      "category": "vehicles",
+      "label": "Sports Car-1mkmFkAz5v",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/Sports_Car-1mkmFkAz5v.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__sports_car_1mkmfkaz5v.png"
+    },
+    "quaternius/cars/suv": {
+      "category": "vehicles",
+      "label": "SUV",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/SUV.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__suv.png"
+    },
+    "quaternius/cars/taxi": {
+      "category": "vehicles",
+      "label": "Taxi",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cars/Taxi.glb",
+      "source": "https://poly.pizza/bundle/FE5IWe6OMk",
+      "sprite": "quaternius__cars__taxi.png"
+    },
+    "quaternius/cyberpunk_pack/ac": {
+      "category": "props",
+      "label": "AC",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/AC.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/AC.glb",
+      "sprite": "quaternius__cyberpunk_pack__ac.png"
+    },
+    "quaternius/cyberpunk_pack/ac_side": {
+      "category": "props",
+      "label": "AC Side",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/AC_Side.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/AC_Side.glb",
+      "sprite": "quaternius__cyberpunk_pack__ac_side.png"
+    },
+    "quaternius/cyberpunk_pack/ac_stacked": {
+      "category": "props",
+      "label": "AC Stacked",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/AC_Stacked.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/AC_Stacked.glb",
+      "sprite": "quaternius__cyberpunk_pack__ac_stacked.png"
+    },
+    "quaternius/cyberpunk_pack/antenna_1": {
+      "category": "props",
+      "label": "Antenna 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Antenna_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Antenna_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__antenna_1.png"
+    },
+    "quaternius/cyberpunk_pack/antenna_2": {
+      "category": "props",
+      "label": "Antenna 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Antenna_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Antenna_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__antenna_2.png"
+    },
+    "quaternius/cyberpunk_pack/cable_long": {
+      "category": "props",
+      "label": "Cable Long",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Cable_Long.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Cable_Long.glb",
+      "sprite": "quaternius__cyberpunk_pack__cable_long.png"
+    },
+    "quaternius/cyberpunk_pack/cable_small": {
+      "category": "props",
+      "label": "Cable Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Cable_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Cable_Small.glb",
+      "sprite": "quaternius__cyberpunk_pack__cable_small.png"
+    },
+    "quaternius/cyberpunk_pack/cable_thick": {
+      "category": "props",
+      "label": "Cable Thick",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Cable_Thick.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Cable_Thick.glb",
+      "sprite": "quaternius__cyberpunk_pack__cable_thick.png"
+    },
+    "quaternius/cyberpunk_pack/character": {
+      "category": "props",
+      "label": "Character",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Character.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Character.glb",
+      "sprite": "quaternius__cyberpunk_pack__character.png"
+    },
+    "quaternius/cyberpunk_pack/collectible_board": {
+      "category": "props",
+      "label": "Collectible Board",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Collectible_Board.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Collectible_Board.glb",
+      "sprite": "quaternius__cyberpunk_pack__collectible_board.png"
+    },
+    "quaternius/cyberpunk_pack/collectible_gear": {
+      "category": "props",
+      "label": "Collectible Gear",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Collectible_Gear.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Collectible_Gear.glb",
+      "sprite": "quaternius__cyberpunk_pack__collectible_gear.png"
+    },
+    "quaternius/cyberpunk_pack/computer": {
+      "category": "props",
+      "label": "Computer",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Computer.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Computer.glb",
+      "sprite": "quaternius__cyberpunk_pack__computer.png"
+    },
+    "quaternius/cyberpunk_pack/computer_large": {
+      "category": "props",
+      "label": "Computer Large",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Computer_Large.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Computer_Large.glb",
+      "sprite": "quaternius__cyberpunk_pack__computer_large.png"
+    },
+    "quaternius/cyberpunk_pack/door": {
+      "category": "props",
+      "label": "Door",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Door.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Door.glb",
+      "sprite": "quaternius__cyberpunk_pack__door.png"
+    },
+    "quaternius/cyberpunk_pack/enemy_2legs": {
+      "category": "props",
+      "label": "Enemy 2Legs",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Enemy_2Legs.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Enemy_2Legs.glb",
+      "sprite": "quaternius__cyberpunk_pack__enemy_2legs.png"
+    },
+    "quaternius/cyberpunk_pack/enemy_2legs_gun": {
+      "category": "props",
+      "label": "Enemy 2Legs Gun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Enemy_2Legs_Gun.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Enemy_2Legs_Gun.glb",
+      "sprite": "quaternius__cyberpunk_pack__enemy_2legs_gun.png"
+    },
+    "quaternius/cyberpunk_pack/enemy_flying": {
+      "category": "props",
+      "label": "Enemy Flying",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Enemy_Flying.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Enemy_Flying.glb",
+      "sprite": "quaternius__cyberpunk_pack__enemy_flying.png"
+    },
+    "quaternius/cyberpunk_pack/enemy_flying_gun": {
+      "category": "props",
+      "label": "Enemy Flying Gun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Enemy_Flying_Gun.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Enemy_Flying_Gun.glb",
+      "sprite": "quaternius__cyberpunk_pack__enemy_flying_gun.png"
+    },
+    "quaternius/cyberpunk_pack/enemy_large": {
+      "category": "props",
+      "label": "Enemy Large",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Enemy_Large.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Enemy_Large.glb",
+      "sprite": "quaternius__cyberpunk_pack__enemy_large.png"
+    },
+    "quaternius/cyberpunk_pack/enemy_large_gun": {
+      "category": "props",
+      "label": "Enemy Large Gun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Enemy_Large_Gun.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Enemy_Large_Gun.glb",
+      "sprite": "quaternius__cyberpunk_pack__enemy_large_gun.png"
+    },
+    "quaternius/cyberpunk_pack/fence": {
+      "category": "props",
+      "label": "Fence",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Fence.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Fence.glb",
+      "sprite": "quaternius__cyberpunk_pack__fence.png"
+    },
+    "quaternius/cyberpunk_pack/lever": {
+      "category": "props",
+      "label": "Lever",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Lever.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Lever.glb",
+      "sprite": "quaternius__cyberpunk_pack__lever.png"
+    },
+    "quaternius/cyberpunk_pack/light_square": {
+      "category": "props",
+      "label": "Light Square",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Light_Square.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Light_Square.glb",
+      "sprite": "quaternius__cyberpunk_pack__light_square.png"
+    },
+    "quaternius/cyberpunk_pack/light_street_1": {
+      "category": "props",
+      "label": "Light Street 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Light_Street_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Light_Street_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__light_street_1.png"
+    },
+    "quaternius/cyberpunk_pack/light_street_2": {
+      "category": "props",
+      "label": "Light Street 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Light_Street_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Light_Street_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__light_street_2.png"
+    },
+    "quaternius/cyberpunk_pack/lootbox": {
+      "category": "props",
+      "label": "Lootbox",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Lootbox.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Lootbox.glb",
+      "sprite": "quaternius__cyberpunk_pack__lootbox.png"
+    },
+    "quaternius/cyberpunk_pack/pickup_health": {
+      "category": "props",
+      "label": "Pickup Health",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pickup_Health.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pickup_Health.glb",
+      "sprite": "quaternius__cyberpunk_pack__pickup_health.png"
+    },
+    "quaternius/cyberpunk_pack/pickup_heart": {
+      "category": "props",
+      "label": "Pickup Heart",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pickup_Heart.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pickup_Heart.glb",
+      "sprite": "quaternius__cyberpunk_pack__pickup_heart.png"
+    },
+    "quaternius/cyberpunk_pack/pickup_tank": {
+      "category": "props",
+      "label": "Pickup Tank",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pickup_Tank.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pickup_Tank.glb",
+      "sprite": "quaternius__cyberpunk_pack__pickup_tank.png"
+    },
+    "quaternius/cyberpunk_pack/pipe_1": {
+      "category": "props",
+      "label": "Pipe 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pipe_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pipe_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__pipe_1.png"
+    },
+    "quaternius/cyberpunk_pack/pipe_2": {
+      "category": "props",
+      "label": "Pipe 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pipe_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pipe_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__pipe_2.png"
+    },
+    "quaternius/cyberpunk_pack/pipe_corner": {
+      "category": "props",
+      "label": "Pipe Corner",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pipe_Corner.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pipe_Corner.glb",
+      "sprite": "quaternius__cyberpunk_pack__pipe_corner.png"
+    },
+    "quaternius/cyberpunk_pack/pipe_corner_2": {
+      "category": "props",
+      "label": "Pipe Corner 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Pipe_Corner_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Pipe_Corner_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__pipe_corner_2.png"
+    },
+    "quaternius/cyberpunk_pack/platform_1x1_empty": {
+      "category": "props",
+      "label": "Platform 1x1 Empty",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_1x1_Empty.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_1x1_Empty.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_1x1_empty.png"
+    },
+    "quaternius/cyberpunk_pack/platform_2x1_empty": {
+      "category": "props",
+      "label": "Platform 2x1 Empty",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_2x1_Empty.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_2x1_Empty.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_2x1_empty.png"
+    },
+    "quaternius/cyberpunk_pack/platform_2x2": {
+      "category": "props",
+      "label": "Platform 2x2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_2x2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_2x2.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_2x2.png"
+    },
+    "quaternius/cyberpunk_pack/platform_2x2_empty": {
+      "category": "props",
+      "label": "Platform 2x2 Empty",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_2x2_Empty.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_2x2_Empty.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_2x2_empty.png"
+    },
+    "quaternius/cyberpunk_pack/platform_4x1": {
+      "category": "props",
+      "label": "Platform 4x1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_4x1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_4x1.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_4x1.png"
+    },
+    "quaternius/cyberpunk_pack/platform_4x1_empty": {
+      "category": "props",
+      "label": "Platform 4x1 Empty",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_4x1_Empty.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_4x1_Empty.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_4x1_empty.png"
+    },
+    "quaternius/cyberpunk_pack/platform_4x2": {
+      "category": "props",
+      "label": "Platform 4x2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_4x2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_4x2.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_4x2.png"
+    },
+    "quaternius/cyberpunk_pack/platform_4x4": {
+      "category": "props",
+      "label": "Platform 4x4",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_4x4.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_4x4.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_4x4.png"
+    },
+    "quaternius/cyberpunk_pack/platform_4x4_empty": {
+      "category": "props",
+      "label": "Platform 4x4 Empty",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Platform_4x4_Empty.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Platform_4x4_Empty.glb",
+      "sprite": "quaternius__cyberpunk_pack__platform_4x4_empty.png"
+    },
+    "quaternius/cyberpunk_pack/rail_corner": {
+      "category": "props",
+      "label": "Rail Corner",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Rail_Corner.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Rail_Corner.glb",
+      "sprite": "quaternius__cyberpunk_pack__rail_corner.png"
+    },
+    "quaternius/cyberpunk_pack/rail_corner_2": {
+      "category": "props",
+      "label": "Rail Corner 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Rail_Corner_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Rail_Corner_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__rail_corner_2.png"
+    },
+    "quaternius/cyberpunk_pack/rail_long": {
+      "category": "props",
+      "label": "Rail Long",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Rail_Long.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Rail_Long.glb",
+      "sprite": "quaternius__cyberpunk_pack__rail_long.png"
+    },
+    "quaternius/cyberpunk_pack/rail_short": {
+      "category": "props",
+      "label": "Rail Short",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Rail_Short.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Rail_Short.glb",
+      "sprite": "quaternius__cyberpunk_pack__rail_short.png"
+    },
+    "quaternius/cyberpunk_pack/sign_1": {
+      "category": "props",
+      "label": "Sign 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_1.png"
+    },
+    "quaternius/cyberpunk_pack/sign_2": {
+      "category": "props",
+      "label": "Sign 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_2.png"
+    },
+    "quaternius/cyberpunk_pack/sign_3": {
+      "category": "props",
+      "label": "Sign 3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_3.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_3.png"
+    },
+    "quaternius/cyberpunk_pack/sign_4": {
+      "category": "props",
+      "label": "Sign 4",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_4.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_4.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_4.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_1": {
+      "category": "props",
+      "label": "Sign Corner 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_1.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_2": {
+      "category": "props",
+      "label": "Sign Corner 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_2.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_3": {
+      "category": "props",
+      "label": "Sign Corner 3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_3.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_3.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_3_fenced": {
+      "category": "props",
+      "label": "Sign Corner 3 Fenced",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_3_Fenced.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_3_Fenced.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_3_fenced.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_hazard": {
+      "category": "props",
+      "label": "Sign Corner Hazard",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_Hazard.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_Hazard.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_hazard.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_small1": {
+      "category": "props",
+      "label": "Sign Corner Small1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_Small1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_Small1.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_small1.png"
+    },
+    "quaternius/cyberpunk_pack/sign_corner_small2": {
+      "category": "props",
+      "label": "Sign Corner Small2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Corner_Small2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Corner_Small2.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_corner_small2.png"
+    },
+    "quaternius/cyberpunk_pack/sign_small_1": {
+      "category": "props",
+      "label": "Sign Small 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Small_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Small_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_small_1.png"
+    },
+    "quaternius/cyberpunk_pack/sign_small_2": {
+      "category": "props",
+      "label": "Sign Small 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Small_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Small_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_small_2.png"
+    },
+    "quaternius/cyberpunk_pack/sign_small_3": {
+      "category": "props",
+      "label": "Sign Small 3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Sign_Small_3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Sign_Small_3.glb",
+      "sprite": "quaternius__cyberpunk_pack__sign_small_3.png"
+    },
+    "quaternius/cyberpunk_pack/support": {
+      "category": "props",
+      "label": "Support",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Support.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Support.glb",
+      "sprite": "quaternius__cyberpunk_pack__support.png"
+    },
+    "quaternius/cyberpunk_pack/support_long": {
+      "category": "props",
+      "label": "Support Long",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Support_Long.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Support_Long.glb",
+      "sprite": "quaternius__cyberpunk_pack__support_long.png"
+    },
+    "quaternius/cyberpunk_pack/support_short": {
+      "category": "props",
+      "label": "Support Short",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Support_Short.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Support_Short.glb",
+      "sprite": "quaternius__cyberpunk_pack__support_short.png"
+    },
+    "quaternius/cyberpunk_pack/tank": {
+      "category": "props",
+      "label": "Tank",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Tank.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Tank.glb",
+      "sprite": "quaternius__cyberpunk_pack__tank.png"
+    },
+    "quaternius/cyberpunk_pack/turret_cannon": {
+      "category": "props",
+      "label": "Turret Cannon",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Turret_Cannon.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Turret_Cannon.glb",
+      "sprite": "quaternius__cyberpunk_pack__turret_cannon.png"
+    },
+    "quaternius/cyberpunk_pack/turret_gun": {
+      "category": "props",
+      "label": "Turret Gun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Turret_Gun.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Turret_Gun.glb",
+      "sprite": "quaternius__cyberpunk_pack__turret_gun.png"
+    },
+    "quaternius/cyberpunk_pack/turret_gundouble": {
+      "category": "props",
+      "label": "Turret GunDouble",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Turret_GunDouble.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Turret_GunDouble.glb",
+      "sprite": "quaternius__cyberpunk_pack__turret_gundouble.png"
+    },
+    "quaternius/cyberpunk_pack/turret_teleporter": {
+      "category": "props",
+      "label": "Turret Teleporter",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/Turret_Teleporter.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/Turret_Teleporter.glb",
+      "sprite": "quaternius__cyberpunk_pack__turret_teleporter.png"
+    },
+    "quaternius/cyberpunk_pack/tv_1": {
+      "category": "props",
+      "label": "TV 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/TV_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/TV_1.glb",
+      "sprite": "quaternius__cyberpunk_pack__tv_1.png"
+    },
+    "quaternius/cyberpunk_pack/tv_2": {
+      "category": "props",
+      "label": "TV 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/TV_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/TV_2.glb",
+      "sprite": "quaternius__cyberpunk_pack__tv_2.png"
+    },
+    "quaternius/cyberpunk_pack/tv_3": {
+      "category": "props",
+      "label": "TV 3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/cyberpunk_pack/TV_3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/cyberpunk_pack/TV_3.glb",
+      "sprite": "quaternius__cyberpunk_pack__tv_3.png"
+    },
+    "quaternius/guns/assault_rifle": {
+      "category": "weapons",
+      "label": "Assault Rifle",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Assault_Rifle.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__assault_rifle.png"
+    },
+    "quaternius/guns/assault_rifle_bgvuu4cumv": {
+      "category": "weapons",
+      "label": "Assault Rifle-Bgvuu4CUMV",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Assault_Rifle-Bgvuu4CUMV.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__assault_rifle_bgvuu4cumv.png"
+    },
+    "quaternius/guns/assault_rifle_fplucho45c": {
+      "category": "weapons",
+      "label": "Assault Rifle-fpLucho45C",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Assault_Rifle-fpLucho45C.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__assault_rifle_fplucho45c.png"
+    },
+    "quaternius/guns/bayonet": {
+      "category": "weapons",
+      "label": "Bayonet",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Bayonet.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__bayonet.png"
+    },
+    "quaternius/guns/bipod": {
+      "category": "weapons",
+      "label": "Bipod",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Bipod.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__bipod.png"
+    },
+    "quaternius/guns/bullpup": {
+      "category": "weapons",
+      "label": "Bullpup",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Bullpup.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__bullpup.png"
+    },
+    "quaternius/guns/pistol": {
+      "category": "weapons",
+      "label": "Pistol",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Pistol.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__pistol.png"
+    },
+    "quaternius/guns/pistol_52kqzphmef": {
+      "category": "weapons",
+      "label": "Pistol-52kQzphmeF",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Pistol-52kQzphmeF.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__pistol_52kqzphmef.png"
+    },
+    "quaternius/guns/pistol_j3i9kdq3kt": {
+      "category": "weapons",
+      "label": "Pistol-J3i9KDQ3kt",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Pistol-J3i9KDQ3kt.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__pistol_j3i9kdq3kt.png"
+    },
+    "quaternius/guns/pistol_z7aojju583": {
+      "category": "weapons",
+      "label": "Pistol-Z7aOjJu583",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Pistol-Z7aOjJu583.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__pistol_z7aojju583.png"
+    },
+    "quaternius/guns/revolver": {
+      "category": "weapons",
+      "label": "Revolver",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Revolver.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__revolver.png"
+    },
+    "quaternius/guns/revolver_9c26wspms0": {
+      "category": "weapons",
+      "label": "Revolver-9C26wSpMS0",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Revolver-9C26wSpMS0.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__revolver_9c26wspms0.png"
+    },
+    "quaternius/guns/revolver_xrnluz6kqj": {
+      "category": "weapons",
+      "label": "Revolver-XrnLUz6kQj",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Revolver-XrnLUz6kQj.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__revolver_xrnluz6kqj.png"
+    },
+    "quaternius/guns/scope": {
+      "category": "weapons",
+      "label": "Scope",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Scope.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__scope.png"
+    },
+    "quaternius/guns/shotgun": {
+      "category": "weapons",
+      "label": "Shotgun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Shotgun.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__shotgun.png"
+    },
+    "quaternius/guns/shotgun_sawed_off": {
+      "category": "weapons",
+      "label": "Shotgun Sawed Off",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Shotgun_Sawed_Off.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__shotgun_sawed_off.png"
+    },
+    "quaternius/guns/shotgun_short_stock": {
+      "category": "weapons",
+      "label": "Shotgun Short Stock",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Shotgun_Short_Stock.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__shotgun_short_stock.png"
+    },
+    "quaternius/guns/shotgun_zmptnh7njl": {
+      "category": "weapons",
+      "label": "Shotgun-ZmPTnh7njL",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Shotgun-ZmPTnh7njL.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__shotgun_zmptnh7njl.png"
+    },
+    "quaternius/guns/sniper_rifle": {
+      "category": "weapons",
+      "label": "Sniper Rifle",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Sniper_Rifle.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__sniper_rifle.png"
+    },
+    "quaternius/guns/sniper_rifle_asomzierq3": {
+      "category": "weapons",
+      "label": "Sniper Rifle-ASOMZIErq3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Sniper_Rifle-ASOMZIErq3.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__sniper_rifle_asomzierq3.png"
+    },
+    "quaternius/guns/sniper_rifle_i65heldsw6": {
+      "category": "weapons",
+      "label": "Sniper Rifle-i65hEldsw6",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Sniper_Rifle-i65hEldsw6.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__sniper_rifle_i65heldsw6.png"
+    },
+    "quaternius/guns/sniper_rifle_tkabjaeofl": {
+      "category": "weapons",
+      "label": "Sniper Rifle-TKaBjAEofL",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Sniper_Rifle-TKaBjAEofL.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__sniper_rifle_tkabjaeofl.png"
+    },
+    "quaternius/guns/submachine_gun": {
+      "category": "weapons",
+      "label": "Submachine Gun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Submachine_Gun.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__submachine_gun.png"
+    },
+    "quaternius/guns/submachine_gun_nsp3juku73": {
+      "category": "weapons",
+      "label": "Submachine Gun-nsP3JukU73",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Submachine_Gun-nsP3JukU73.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__submachine_gun_nsp3juku73.png"
+    },
+    "quaternius/guns/tripod": {
+      "category": "weapons",
+      "label": "Tripod",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/guns/Tripod.glb",
+      "source": "https://poly.pizza/bundle/Ultimate-Guns-Pack-cpgUfI4t2F",
+      "sprite": "quaternius__guns__tripod.png"
+    },
+    "quaternius/street_pack/sign_noparking": {
+      "category": "props",
+      "label": "Sign NoParking",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Sign_NoParking.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Sign_NoParking.glb",
+      "sprite": "quaternius__street_pack__sign_noparking.png"
+    },
+    "quaternius/street_pack/sign_stop": {
+      "category": "props",
+      "label": "Sign Stop",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Sign_Stop.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Sign_Stop.glb",
+      "sprite": "quaternius__street_pack__sign_stop.png"
+    },
+    "quaternius/street_pack/sign_triangle": {
+      "category": "props",
+      "label": "Sign Triangle",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Sign_Triangle.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Sign_Triangle.glb",
+      "sprite": "quaternius__street_pack__sign_triangle.png"
+    },
+    "quaternius/street_pack/street_3way": {
+      "category": "props",
+      "label": "Street 3Way",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_3Way.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_3Way.glb",
+      "sprite": "quaternius__street_pack__street_3way.png"
+    },
+    "quaternius/street_pack/street_3way_2": {
+      "category": "props",
+      "label": "Street 3Way 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_3Way_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_3Way_2.glb",
+      "sprite": "quaternius__street_pack__street_3way_2.png"
+    },
+    "quaternius/street_pack/street_4way": {
+      "category": "props",
+      "label": "Street 4Way",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_4Way.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_4Way.glb",
+      "sprite": "quaternius__street_pack__street_4way.png"
+    },
+    "quaternius/street_pack/street_4way_2": {
+      "category": "props",
+      "label": "Street 4Way 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_4Way_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_4Way_2.glb",
+      "sprite": "quaternius__street_pack__street_4way_2.png"
+    },
+    "quaternius/street_pack/street_bridge": {
+      "category": "props",
+      "label": "Street Bridge",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Bridge.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Bridge.glb",
+      "sprite": "quaternius__street_pack__street_bridge.png"
+    },
+    "quaternius/street_pack/street_bridge_ramp": {
+      "category": "props",
+      "label": "Street Bridge Ramp",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Bridge_Ramp.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Bridge_Ramp.glb",
+      "sprite": "quaternius__street_pack__street_bridge_ramp.png"
+    },
+    "quaternius/street_pack/street_bridge_underpass": {
+      "category": "props",
+      "label": "Street Bridge Underpass",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Bridge_Underpass.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Bridge_Underpass.glb",
+      "sprite": "quaternius__street_pack__street_bridge_underpass.png"
+    },
+    "quaternius/street_pack/street_bridge_water": {
+      "category": "props",
+      "label": "Street Bridge Water",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Bridge_Water.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Bridge_Water.glb",
+      "sprite": "quaternius__street_pack__street_bridge_water.png"
+    },
+    "quaternius/street_pack/street_bridge_waterramp": {
+      "category": "props",
+      "label": "Street Bridge WaterRamp",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Bridge_WaterRamp.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Bridge_WaterRamp.glb",
+      "sprite": "quaternius__street_pack__street_bridge_waterramp.png"
+    },
+    "quaternius/street_pack/street_curve": {
+      "category": "props",
+      "label": "Street Curve",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Curve.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Curve.glb",
+      "sprite": "quaternius__street_pack__street_curve.png"
+    },
+    "quaternius/street_pack/street_deadend": {
+      "category": "props",
+      "label": "Street Deadend",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Deadend.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Deadend.glb",
+      "sprite": "quaternius__street_pack__street_deadend.png"
+    },
+    "quaternius/street_pack/street_elevated": {
+      "category": "props",
+      "label": "Street Elevated",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Elevated.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Elevated.glb",
+      "sprite": "quaternius__street_pack__street_elevated.png"
+    },
+    "quaternius/street_pack/street_elevated_ramp": {
+      "category": "props",
+      "label": "Street Elevated Ramp",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Elevated_Ramp.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Elevated_Ramp.glb",
+      "sprite": "quaternius__street_pack__street_elevated_ramp.png"
+    },
+    "quaternius/street_pack/street_empty": {
+      "category": "props",
+      "label": "Street Empty",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Empty.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Empty.glb",
+      "sprite": "quaternius__street_pack__street_empty.png"
+    },
+    "quaternius/street_pack/street_empty_water": {
+      "category": "props",
+      "label": "Street Empty Water",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Empty_Water.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Empty_Water.glb",
+      "sprite": "quaternius__street_pack__street_empty_water.png"
+    },
+    "quaternius/street_pack/street_straight": {
+      "category": "props",
+      "label": "Street Straight",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Street_Straight.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Street_Straight.glb",
+      "sprite": "quaternius__street_pack__street_straight.png"
+    },
+    "quaternius/street_pack/streetlight_double": {
+      "category": "props",
+      "label": "Streetlight Double",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Streetlight_Double.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Streetlight_Double.glb",
+      "sprite": "quaternius__street_pack__streetlight_double.png"
+    },
+    "quaternius/street_pack/streetlight_single": {
+      "category": "props",
+      "label": "Streetlight Single",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Streetlight_Single.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Streetlight_Single.glb",
+      "sprite": "quaternius__street_pack__streetlight_single.png"
+    },
+    "quaternius/street_pack/streetlight_triple": {
+      "category": "props",
+      "label": "Streetlight Triple",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Streetlight_Triple.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Streetlight_Triple.glb",
+      "sprite": "quaternius__street_pack__streetlight_triple.png"
+    },
+    "quaternius/street_pack/streets_all": {
+      "category": "props",
+      "label": "Streets All",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/Streets_all.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/Streets_all.glb",
+      "sprite": "quaternius__street_pack__streets_all.png"
+    },
+    "quaternius/street_pack/trafficlight": {
+      "category": "props",
+      "label": "TrafficLight",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/TrafficLight.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/TrafficLight.glb",
+      "sprite": "quaternius__street_pack__trafficlight.png"
+    },
+    "quaternius/street_pack/trafficlight_2": {
+      "category": "props",
+      "label": "TrafficLight 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/street_pack/TrafficLight_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/street_pack/TrafficLight_2.glb",
+      "sprite": "quaternius__street_pack__trafficlight_2.png"
+    },
+    "quaternius/survival_pack/axe": {
+      "category": "props",
+      "label": "Axe",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Axe.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Axe.glb",
+      "sprite": "quaternius__survival_pack__axe.png"
+    },
+    "quaternius/survival_pack/axe_small": {
+      "category": "props",
+      "label": "Axe Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Axe_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Axe_Small.glb",
+      "sprite": "quaternius__survival_pack__axe_small.png"
+    },
+    "quaternius/survival_pack/backpack": {
+      "category": "props",
+      "label": "Backpack",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Backpack.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Backpack.glb",
+      "sprite": "quaternius__survival_pack__backpack.png"
+    },
+    "quaternius/survival_pack/bandages": {
+      "category": "props",
+      "label": "Bandages",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Bandages.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Bandages.glb",
+      "sprite": "quaternius__survival_pack__bandages.png"
+    },
+    "quaternius/survival_pack/battery_big": {
+      "category": "props",
+      "label": "Battery Big",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Battery_Big.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Battery_Big.glb",
+      "sprite": "quaternius__survival_pack__battery_big.png"
+    },
+    "quaternius/survival_pack/battery_small": {
+      "category": "props",
+      "label": "Battery Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Battery_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Battery_Small.glb",
+      "sprite": "quaternius__survival_pack__battery_small.png"
+    },
+    "quaternius/survival_pack/beartrap_closed": {
+      "category": "props",
+      "label": "BearTrap Closed",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/BearTrap_Closed.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/BearTrap_Closed.glb",
+      "sprite": "quaternius__survival_pack__beartrap_closed.png"
+    },
+    "quaternius/survival_pack/beartrap_open": {
+      "category": "props",
+      "label": "BearTrap Open",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/BearTrap_Open.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/BearTrap_Open.glb",
+      "sprite": "quaternius__survival_pack__beartrap_open.png"
+    },
+    "quaternius/survival_pack/bonfire": {
+      "category": "props",
+      "label": "Bonfire",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Bonfire.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Bonfire.glb",
+      "sprite": "quaternius__survival_pack__bonfire.png"
+    },
+    "quaternius/survival_pack/bonfire_fire": {
+      "category": "props",
+      "label": "Bonfire Fire",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Bonfire_Fire.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Bonfire_Fire.glb",
+      "sprite": "quaternius__survival_pack__bonfire_fire.png"
+    },
+    "quaternius/survival_pack/can_broken": {
+      "category": "props",
+      "label": "Can Broken",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Can_Broken.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Can_Broken.glb",
+      "sprite": "quaternius__survival_pack__can_broken.png"
+    },
+    "quaternius/survival_pack/can_closed": {
+      "category": "props",
+      "label": "Can Closed",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Can_Closed.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Can_Closed.glb",
+      "sprite": "quaternius__survival_pack__can_closed.png"
+    },
+    "quaternius/survival_pack/can_open": {
+      "category": "props",
+      "label": "Can Open",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Can_Open.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Can_Open.glb",
+      "sprite": "quaternius__survival_pack__can_open.png"
+    },
+    "quaternius/survival_pack/can_red": {
+      "category": "props",
+      "label": "Can Red",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Can_Red.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Can_Red.glb",
+      "sprite": "quaternius__survival_pack__can_red.png"
+    },
+    "quaternius/survival_pack/compass_closed": {
+      "category": "props",
+      "label": "Compass Closed",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Compass_Closed.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Compass_Closed.glb",
+      "sprite": "quaternius__survival_pack__compass_closed.png"
+    },
+    "quaternius/survival_pack/compass_open": {
+      "category": "props",
+      "label": "Compass Open",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Compass_Open.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Compass_Open.glb",
+      "sprite": "quaternius__survival_pack__compass_open.png"
+    },
+    "quaternius/survival_pack/firstaidkit": {
+      "category": "props",
+      "label": "FirstAidKit",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/FirstAidKit.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/FirstAidKit.glb",
+      "sprite": "quaternius__survival_pack__firstaidkit.png"
+    },
+    "quaternius/survival_pack/firstaidkit_hard": {
+      "category": "props",
+      "label": "FirstAidKit Hard",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/FirstAidKit_Hard.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/FirstAidKit_Hard.glb",
+      "sprite": "quaternius__survival_pack__firstaidkit_hard.png"
+    },
+    "quaternius/survival_pack/flaregun": {
+      "category": "props",
+      "label": "FlareGun",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/FlareGun.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/FlareGun.glb",
+      "sprite": "quaternius__survival_pack__flaregun.png"
+    },
+    "quaternius/survival_pack/gascan": {
+      "category": "props",
+      "label": "GasCan",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/GasCan.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/GasCan.glb",
+      "sprite": "quaternius__survival_pack__gascan.png"
+    },
+    "quaternius/survival_pack/knife": {
+      "category": "props",
+      "label": "Knife",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Knife.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Knife.glb",
+      "sprite": "quaternius__survival_pack__knife.png"
+    },
+    "quaternius/survival_pack/match": {
+      "category": "props",
+      "label": "Match",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Match.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Match.glb",
+      "sprite": "quaternius__survival_pack__match.png"
+    },
+    "quaternius/survival_pack/match_burnt": {
+      "category": "props",
+      "label": "Match Burnt",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Match_Burnt.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Match_Burnt.glb",
+      "sprite": "quaternius__survival_pack__match_burnt.png"
+    },
+    "quaternius/survival_pack/match_fire": {
+      "category": "props",
+      "label": "Match Fire",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Match_Fire.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Match_Fire.glb",
+      "sprite": "quaternius__survival_pack__match_fire.png"
+    },
+    "quaternius/survival_pack/matchbox": {
+      "category": "props",
+      "label": "Matchbox",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Matchbox.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Matchbox.glb",
+      "sprite": "quaternius__survival_pack__matchbox.png"
+    },
+    "quaternius/survival_pack/pan": {
+      "category": "props",
+      "label": "Pan",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Pan.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Pan.glb",
+      "sprite": "quaternius__survival_pack__pan.png"
+    },
+    "quaternius/survival_pack/pan_small": {
+      "category": "props",
+      "label": "Pan Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Pan_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Pan_Small.glb",
+      "sprite": "quaternius__survival_pack__pan_small.png"
+    },
+    "quaternius/survival_pack/phone": {
+      "category": "props",
+      "label": "Phone",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Phone.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Phone.glb",
+      "sprite": "quaternius__survival_pack__phone.png"
+    },
+    "quaternius/survival_pack/pistol_1": {
+      "category": "props",
+      "label": "Pistol 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Pistol_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Pistol_1.glb",
+      "sprite": "quaternius__survival_pack__pistol_1.png"
+    },
+    "quaternius/survival_pack/pistol_2": {
+      "category": "props",
+      "label": "Pistol 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Pistol_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Pistol_2.glb",
+      "sprite": "quaternius__survival_pack__pistol_2.png"
+    },
+    "quaternius/survival_pack/pot": {
+      "category": "props",
+      "label": "Pot",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Pot.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Pot.glb",
+      "sprite": "quaternius__survival_pack__pot.png"
+    },
+    "quaternius/survival_pack/pot_small": {
+      "category": "props",
+      "label": "Pot Small",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Pot_Small.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Pot_Small.glb",
+      "sprite": "quaternius__survival_pack__pot_small.png"
+    },
+    "quaternius/survival_pack/propanetank": {
+      "category": "props",
+      "label": "PropaneTank",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/PropaneTank.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/PropaneTank.glb",
+      "sprite": "quaternius__survival_pack__propanetank.png"
+    },
+    "quaternius/survival_pack/radio": {
+      "category": "props",
+      "label": "Radio",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Radio.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Radio.glb",
+      "sprite": "quaternius__survival_pack__radio.png"
+    },
+    "quaternius/survival_pack/raft": {
+      "category": "props",
+      "label": "Raft",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Raft.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Raft.glb",
+      "sprite": "quaternius__survival_pack__raft.png"
+    },
+    "quaternius/survival_pack/raft_paddle": {
+      "category": "props",
+      "label": "Raft Paddle",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Raft_Paddle.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Raft_Paddle.glb",
+      "sprite": "quaternius__survival_pack__raft_paddle.png"
+    },
+    "quaternius/survival_pack/revolver_1": {
+      "category": "props",
+      "label": "Revolver 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Revolver_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Revolver_1.glb",
+      "sprite": "quaternius__survival_pack__revolver_1.png"
+    },
+    "quaternius/survival_pack/revolver_2": {
+      "category": "props",
+      "label": "Revolver 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Revolver_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Revolver_2.glb",
+      "sprite": "quaternius__survival_pack__revolver_2.png"
+    },
+    "quaternius/survival_pack/revolver_3": {
+      "category": "props",
+      "label": "Revolver 3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Revolver_3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Revolver_3.glb",
+      "sprite": "quaternius__survival_pack__revolver_3.png"
+    },
+    "quaternius/survival_pack/shotgun_1": {
+      "category": "props",
+      "label": "Shotgun 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Shotgun_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Shotgun_1.glb",
+      "sprite": "quaternius__survival_pack__shotgun_1.png"
+    },
+    "quaternius/survival_pack/shotgun_2": {
+      "category": "props",
+      "label": "Shotgun 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Shotgun_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Shotgun_2.glb",
+      "sprite": "quaternius__survival_pack__shotgun_2.png"
+    },
+    "quaternius/survival_pack/shotgun_sawedoff": {
+      "category": "props",
+      "label": "Shotgun SawedOff",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Shotgun_SawedOff.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Shotgun_SawedOff.glb",
+      "sprite": "quaternius__survival_pack__shotgun_sawedoff.png"
+    },
+    "quaternius/survival_pack/shotgun_shortstock": {
+      "category": "props",
+      "label": "Shotgun ShortStock",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Shotgun_ShortStock.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Shotgun_ShortStock.glb",
+      "sprite": "quaternius__survival_pack__shotgun_shortstock.png"
+    },
+    "quaternius/survival_pack/shovel": {
+      "category": "props",
+      "label": "Shovel",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Shovel.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Shovel.glb",
+      "sprite": "quaternius__survival_pack__shovel.png"
+    },
+    "quaternius/survival_pack/tent": {
+      "category": "props",
+      "label": "Tent",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Tent.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Tent.glb",
+      "sprite": "quaternius__survival_pack__tent.png"
+    },
+    "quaternius/survival_pack/torch": {
+      "category": "props",
+      "label": "Torch",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Torch.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Torch.glb",
+      "sprite": "quaternius__survival_pack__torch.png"
+    },
+    "quaternius/survival_pack/trashcan": {
+      "category": "props",
+      "label": "Trashcan",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/Trashcan.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/Trashcan.glb",
+      "sprite": "quaternius__survival_pack__trashcan.png"
+    },
+    "quaternius/survival_pack/waterbottle_1": {
+      "category": "props",
+      "label": "WaterBottle 1",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/WaterBottle_1.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/WaterBottle_1.glb",
+      "sprite": "quaternius__survival_pack__waterbottle_1.png"
+    },
+    "quaternius/survival_pack/waterbottle_2": {
+      "category": "props",
+      "label": "WaterBottle 2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/WaterBottle_2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/WaterBottle_2.glb",
+      "sprite": "quaternius__survival_pack__waterbottle_2.png"
+    },
+    "quaternius/survival_pack/waterbottle_3": {
+      "category": "props",
+      "label": "WaterBottle 3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/WaterBottle_3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/WaterBottle_3.glb",
+      "sprite": "quaternius__survival_pack__waterbottle_3.png"
+    },
+    "quaternius/survival_pack/woodentorch": {
+      "category": "props",
+      "label": "WoodenTorch",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/WoodenTorch.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/WoodenTorch.glb",
+      "sprite": "quaternius__survival_pack__woodentorch.png"
+    },
+    "quaternius/survival_pack/woodentorch_fire": {
+      "category": "props",
+      "label": "WoodenTorch Fire",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/WoodenTorch_Fire.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/WoodenTorch_Fire.glb",
+      "sprite": "quaternius__survival_pack__woodentorch_fire.png"
+    },
+    "quaternius/survival_pack/woodlog": {
+      "category": "props",
+      "label": "WoodLog",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/survival_pack/WoodLog.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/survival_pack/WoodLog.glb",
+      "sprite": "quaternius__survival_pack__woodlog.png"
+    },
+    "quaternius/tank_pack/tank": {
+      "category": "props",
+      "label": "Tank",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/tank_pack/Tank.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/tank_pack/Tank.glb",
+      "sprite": "quaternius__tank_pack__tank.png"
+    },
+    "quaternius/tank_pack/tank2": {
+      "category": "props",
+      "label": "Tank2",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/tank_pack/Tank2.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/tank_pack/Tank2.glb",
+      "sprite": "quaternius__tank_pack__tank2.png"
+    },
+    "quaternius/tank_pack/tank3": {
+      "category": "props",
+      "label": "Tank3",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/tank_pack/Tank3.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/tank_pack/Tank3.glb",
+      "sprite": "quaternius__tank_pack__tank3.png"
+    },
+    "quaternius/tank_pack/tank4": {
+      "category": "props",
+      "label": "Tank4",
+      "license": "CC0-1.0",
+      "model": "models/quaternius/tank_pack/Tank4.glb",
+      "source": "https://github.com/trebeljahr/quaternius-showcase/blob/main/public/glb/tank_pack/Tank4.glb",
+      "sprite": "quaternius__tank_pack__tank4.png"
+    }
+  },
+  "spriteBase": "assets/world/sprites/",
+  "version": 1
+}

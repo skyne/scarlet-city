@@ -94,5 +94,67 @@
       "z_max": 3,
       "duration_secs": 5
     }
+  ],
+  "heist_sites": [
+    {
+      "id": "vault_south",
+      "name": "South Block Vault",
+      "kind": "Vault",
+      "x": 86,
+      "y": 124,
+      "width": 16,
+      "depth": 14,
+      "z_min": 0,
+      "z_max": 6,
+      "quiet_x": 94,
+      "quiet_y": 131,
+      "quiet_z": 6,
+      "quiet_secs": 8,
+      "loud_x": 94,
+      "loud_y": 122,
+      "loud_z": 0,
+      "loud_secs": 2.5,
+      "loot_tier": "Epic"
+    },
+    {
+      "id": "tower_terminal",
+      "name": "East Tower Terminal",
+      "kind": "Terminal",
+      "x": 124,
+      "y": 8,
+      "width": 12,
+      "depth": 12,
+      "z_min": 0,
+      "z_max": 20,
+      "quiet_x": 130,
+      "quiet_y": 14,
+      "quiet_z": 20,
+      "quiet_secs": 9,
+      "loud_x": 130,
+      "loud_y": 22,
+      "loud_z": 0,
+      "loud_secs": 3,
+      "loot_tier": "Epic"
+    },
+    {
+      "id": "warehouse_cargo",
+      "name": "North Warehouse Cargo",
+      "kind": "Cargo",
+      "x": 4,
+      "y": 4,
+      "width": 14,
+      "depth": 12,
+      "z_min": 0,
+      "z_max": 6,
+      "quiet_x": 20,
+      "quiet_y": 8,
+      "quiet_z": 0,
+      "quiet_secs": 7,
+      "loud_x": 11,
+      "loud_y": 18,
+      "loud_z": 0,
+      "loud_secs": 2.2,
+      "loot_tier": "Rare"
+    }
   ]
 }

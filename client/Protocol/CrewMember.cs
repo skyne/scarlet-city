@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 using System;
 using System.Collections.Generic;
@@ -39,6 +39,9 @@ public sealed class CrewMember
 
     [JsonPropertyName("order_z")]
     public float OrderZ { get; set; }
+
+    [JsonPropertyName("appearance")]
+    public CharacterAppearance Appearance { get; set; } = null!;
 
 }
 

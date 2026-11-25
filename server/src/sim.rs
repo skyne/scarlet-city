@@ -7,8 +7,9 @@ use crate::collision::{
     segment_obstacle_t, sightline_blocked,
 };
 use crate::protocol::{
-    CrewMember, DeathCrate, ExfilZone, HitKind, Impact, LootNode, LootTier, MapData, OrderType,
-    PlayerState, Projectile, ServerMessage, StashItem, VehicleKind, VehicleState,
+    AlarmPing, CharacterAppearance, CrewMember, DeathCrate, ExfilZone, HeistSite, HeistState,
+    HitKind, Impact, LootNode, LootTier, MapData, NpcState, OrderType, PlayerState, Projectile,
+    ServerMessage, StashItem, VehicleKind, VehicleState,
 };
 
 pub const TICK_HZ: u32 = 20;
@@ -47,6 +48,84 @@ const CAR_HP: f32 = 80.0;
 const HOVER_HP: f32 = 60.0;
 const FRIENDLY_FIRE: bool = false;
 pub const VISION_RADIUS: f32 = 32.0;
+const HEAT_MAX: f32 = 5.0;
+const HEAT_DECAY_PER_SEC: f32 = 0.05;
+const APPROACH_RADIUS: f32 = 2.6;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum NpcKind {
+    None,
+    Guard,
+    Police,
+    Swat,
+}
+
+impl NpcKind {
+    fn is_law(self) -> bool {
+        self != NpcKind::None
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            NpcKind::None => "",
+            NpcKind::Guard => "Guard",
+            NpcKind::Police => "Police",
+            NpcKind::Swat => "Swat",
+        }
+    }
+}
+
+struct CrewHeat {
+    heat: f32,
+    combat: f32,
+    noise_cd: f32,
+    contact_x: f32,
+    contact_y: f32,
+    contact_z: f32,
+    has_contact: bool,
+    stolen: Vec<Uuid>,
+}
+
+impl Default for CrewHeat {
+    fn default() -> Self {
+        Self {
+            heat: 0.0,
+            combat: 0.0,
+            noise_cd: 0.0,
+            contact_x: 0.0,
+            contact_y: 0.0,
+            contact_z: 0.0,
+            has_contact: false,
+            stolen: Vec::new(),
+        }
+    }
+}
+
+struct HeistJob {
+    site: HeistSite,
+    state: HeistState,
+    progress: f32,
+    approach: String,
+    alarm: bool,
+    owner: Option<Uuid>,
+    crate_id: Option<Uuid>,
+    cooldown: f32,
+    quiet_alarm_in: f32,
+    worked: bool,
+}
+
+struct LiveAlarm {
+    ping: AlarmPing,
+    ttl: f32,
+}
+
+pub struct CityNotice {
+    pub kind: String,
+    pub message: String,
+    pub x: f32,
+    pub y: f32,
+    pub hear: f32,
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct InputState {
@@ -79,7 +158,10 @@ pub struct CrewSpawn {
     pub name: String,
     pub role: String,
     pub max_hp: f32,
+    pub appearance: CharacterAppearance,
 }
+
+pub use crate::db::default_appearance;
 
 #[derive(Clone, Debug)]
 enum Order {
@@ -109,6 +191,7 @@ struct Actor {
     name: String,
     role: String,
     max_hp: f32,
+    appearance: CharacterAppearance,
     order: Order,
     x: f32,
     y: f32,
@@ -127,6 +210,19 @@ struct Actor {
     interact_edge: bool,
     last_seq: u32,
     backpack: Vec<StashItem>,
+    npc: NpcKind,
+    site_id: String,
+    focus: Option<Uuid>,
+    home_x: f32,
+    home_y: f32,
+    home_z: f32,
+    patrol: f32,
+    seen_x: f32,
+    seen_y: f32,
+    seen_z: f32,
+    seen: bool,
+    search: f32,
+    alert: bool,
 }
 
 struct Vehicle {
@@ -140,6 +236,7 @@ struct Vehicle {
     speed: f32,
     hp: f32,
     driver_id: Option<Uuid>,
+    law: bool,
 }
 
 struct FlyingShot {
@@ -183,6 +280,10 @@ pub struct World {
     shots: Vec<FlyingShot>,
     impacts: Vec<Impact>,
     events: Vec<RaidEvent>,
+    heists: Vec<HeistJob>,
+    crew_heat: HashMap<Uuid, CrewHeat>,
+    alarms: Vec<LiveAlarm>,
+    notices: Vec<CityNotice>,
 }
 
 impl World {
@@ -220,11 +321,29 @@ impl World {
                         speed: 0.0,
                         hp: vehicle_max_hp(s.kind),
                         driver_id: None,
+                        law: false,
                     },
                 )
             })
             .collect();
-        Self {
+        let heists = map
+            .heist_sites
+            .iter()
+            .cloned()
+            .map(|site| HeistJob {
+                site,
+                state: HeistState::Ready,
+                progress: 0.0,
+                approach: String::new(),
+                alarm: false,
+                owner: None,
+                crate_id: None,
+                cooldown: 0.0,
+                quiet_alarm_in: -1.0,
+                worked: false,
+            })
+            .collect();
+        let mut world = Self {
             map,
             tick: 0,
             squads: HashMap::new(),
@@ -236,7 +355,13 @@ impl World {
             shots: Vec::new(),
             impacts: Vec::new(),
             events: Vec::new(),
-        }
+            heists,
+            crew_heat: HashMap::new(),
+            alarms: Vec::new(),
+            notices: Vec::new(),
+        };
+        world.seed_guards();
+        world
     }
 
     pub fn register_squad(&mut self, name: String, profile_id: i64) -> Uuid {
@@ -303,6 +428,7 @@ impl World {
                 name: "Operative".into(),
                 role: "Point".into(),
                 max_hp: 100.0,
+                appearance: default_appearance(),
             }],
             None,
         )
@@ -374,6 +500,7 @@ impl World {
                     name: member.name.clone(),
                     role: member.role.clone(),
                     max_hp: member.max_hp.max(1.0),
+                    appearance: member.appearance.clone(),
                     order,
                     x: ax + ang.cos() * ring,
                     y: ay + ang.sin() * ring,
@@ -396,6 +523,19 @@ impl World {
                     interact_edge: false,
                     last_seq: 0,
                     backpack: pack,
+                    npc: NpcKind::None,
+                    site_id: String::new(),
+                    focus: None,
+                    home_x: ax,
+                    home_y: ay,
+                    home_z: self.map.ground_z,
+                    patrol: 0.0,
+                    seen_x: 0.0,
+                    seen_y: 0.0,
+                    seen_z: 0.0,
+                    seen: false,
+                    search: 0.0,
+                    alert: false,
                 },
             );
             self.crews.entry(squad_id).or_default().push(actor_id);
@@ -540,11 +680,15 @@ impl World {
         self.impacts.clear();
         self.tick_loot();
         self.tick_crates();
+        self.begin_heist_tick();
         let ids: Vec<Uuid> = self.actors.keys().copied().collect();
         for id in ids {
             self.tick_actor(id);
         }
         self.tick_projectiles();
+        self.resolve_heists();
+        self.tick_heat_and_response();
+        self.tick_alarms();
     }
 
     fn tick_loot(&mut self) {
@@ -571,9 +715,29 @@ impl World {
         std::mem::take(&mut self.events)
     }
 
+    pub fn drain_notices(&mut self) -> Vec<CityNotice> {
+        std::mem::take(&mut self.notices)
+    }
+
+    pub fn listener_positions(&self) -> Vec<(Uuid, f32, f32)> {
+        self.squads
+            .iter()
+            .filter_map(|(pid, session)| {
+                let id = session.controlled_actor_id?;
+                let actor = self.actors.get(&id)?;
+                Some((*pid, actor.x, actor.y))
+            })
+            .collect()
+    }
+
     fn tick_actor(&mut self, id: Uuid) {
         if !self.is_human_controlled(id) {
-            let input = self.bot_think(id);
+            let law = self.actors.get(&id).map(|a| a.npc.is_law()).unwrap_or(false);
+            let input = if law {
+                self.hostile_think(id)
+            } else {
+                self.bot_think(id)
+            };
             self.apply_input_step(id, input);
             return;
         }
@@ -608,6 +772,7 @@ impl World {
         };
         actor.last_seq = input.seq;
         actor.input = input.clone();
+        let holding = input.interact;
         let interact = input.interact && !actor.interact_edge;
         let vehicle_id = actor.vehicle_id;
 
@@ -618,7 +783,8 @@ impl World {
             self.walk_actor(id, &input, dt);
         }
 
-        if interact {
+        let drilling = holding && self.advance_heist(id, dt);
+        if interact && !drilling {
             self.try_interact(id);
         }
         if let Some(p) = self.actors.get_mut(&id) {
@@ -1010,6 +1176,11 @@ impl World {
         });
         if let Some(p) = self.actors.get_mut(&id) {
             p.shoot_cd = SHOOT_COOLDOWN;
+            if !p.npc.is_law() {
+                let squad = p.squad_id;
+                let (nx, ny, nz) = (p.x, p.y, p.z);
+                self.note_gunfire(squad, nx, ny, nz);
+            }
         }
     }
 
@@ -1163,7 +1334,8 @@ impl World {
             match hit.kind {
                 HitKind::Actor => {
                     if let Some(id) = hit.target {
-                        self.apply_actor_damage(id, damage);
+                        let attacker = self.shots.get(index).map(|s| s.proj.owner_id);
+                        self.apply_actor_damage(id, damage, attacker);
                     }
                 }
                 HitKind::Vehicle => {
@@ -1177,7 +1349,7 @@ impl World {
         self.shots.retain(|s| s.life > 0.0);
     }
 
-    fn apply_actor_damage(&mut self, actor_id: Uuid, damage: f32) {
+    fn apply_actor_damage(&mut self, actor_id: Uuid, damage: f32, attacker: Option<Uuid>) {
         let Some(p) = self.actors.get_mut(&actor_id) else {
             return;
         };
@@ -1185,6 +1357,22 @@ impl World {
         p.armor -= absorbed;
         p.health = (p.health - (damage - absorbed)).max(0.0);
         let dead = p.health <= 0.0;
+        let target_law = p.npc.is_law();
+        let (tx, ty, tz) = (p.x, p.y, p.z);
+        let target_squad = p.squad_id;
+        if target_law {
+            p.alert = true;
+        }
+        if let Some(attacker) = attacker {
+            if let Some(src) = self.actors.get(&attacker) {
+                if !src.npc.is_law() && target_law {
+                    let squad = src.squad_id;
+                    self.note_assault(squad, tx, ty, tz);
+                } else if src.npc.is_law() && !target_law {
+                    self.mark_combat(target_squad);
+                }
+            }
+        }
         if dead {
             self.kill_actor(actor_id);
         }
@@ -1234,7 +1422,7 @@ impl World {
             p.vy = 0.0;
             p.vz = 0.0;
         }
-        self.apply_actor_damage(driver, damage);
+        self.apply_actor_damage(driver, damage, None);
     }
 
     fn kill_actor(&mut self, actor_id: Uuid) {
@@ -1380,6 +1568,12 @@ impl World {
                 && !sightline_blocked(ox, oy, oz, x, y, z, &self.map.obstacles)
         };
 
+        let heat = squad_id
+            .and_then(|id| self.crew_heat.get(&id))
+            .map(|h| h.heat)
+            .unwrap_or(0.0);
+        let stars = heat.floor().clamp(0.0, HEAT_MAX) as u8;
+
         ServerMessage::Snapshot {
             tick: self.tick,
             last_processed_input_seq: last_seq,
@@ -1391,7 +1585,7 @@ impl World {
             players: self
                 .actors
                 .values()
-                .filter(|a| visible_actor(a))
+                .filter(|a| !a.npc.is_law() && visible_actor(a))
                 .map(|p| self.actor_state(p, p.id == controlled_actor_id.unwrap_or_default()))
                 .collect(),
             vehicles: self
@@ -1414,6 +1608,7 @@ impl World {
                     speed: v.speed,
                     hp: v.hp,
                     driver_id: v.driver_id,
+                    law: v.law,
                 })
                 .collect(),
             loot_nodes: self
@@ -1449,6 +1644,26 @@ impl World {
                 .filter(|i| visible_point(i.x, i.y, i.z))
                 .cloned()
                 .collect(),
+            heists: self.heist_markers(),
+            heat,
+            stars,
+            alarms: self.alarms_for(ox, oy, oz, observing),
+            npcs: self
+                .actors
+                .values()
+                .filter(|a| a.npc.is_law() && visible_actor(a))
+                .map(|a| NpcState {
+                    id: a.id,
+                    kind: a.npc.label().into(),
+                    x: a.x,
+                    y: a.y,
+                    z: a.z,
+                    yaw: a.yaw,
+                    health: a.health,
+                    alert: a.alert,
+                    vehicle_id: a.vehicle_id,
+                })
+                .collect(),
         }
     }
 
@@ -1467,6 +1682,7 @@ impl World {
             squad_id: p.squad_id,
             name: p.name.clone(),
             role: p.role.clone(),
+            appearance: p.appearance.clone(),
             is_ai: !self.is_human_controlled(p.id),
             x: p.x,
             y: p.y,
@@ -1502,6 +1718,7 @@ impl World {
                     actor_id: a.id,
                     name: a.name.clone(),
                     role: a.role.clone(),
+                    appearance: a.appearance.clone(),
                     hp: a.health,
                     max_hp: a.max_hp,
                     is_ai: !human,
@@ -1739,8 +1956,25 @@ impl World {
         if let Some(v) = self.vehicles.get_mut(&vid) {
             v.driver_id = Some(actor_id);
         }
+        let taker_law = self
+            .actors
+            .get(&actor_id)
+            .map(|p| p.npc.is_law())
+            .unwrap_or(true);
+        let squad = self.actors.get(&actor_id).map(|p| p.squad_id);
+        let stolen_law = self.vehicles.get(&vid).map(|v| v.law).unwrap_or(false);
         if let Some(p) = self.actors.get_mut(&actor_id) {
             p.vehicle_id = Some(vid);
+        }
+        if !taker_law {
+            if let Some(squad) = squad {
+                let (x, y, z) = self
+                    .vehicles
+                    .get(&vid)
+                    .map(|v| (v.x, v.y, v.z))
+                    .unwrap_or((0.0, 0.0, 0.0));
+                self.note_theft(squad, vid, x, y, z, stolen_law);
+            }
         }
     }
 
@@ -2059,6 +2293,9 @@ fn loot_to_item(tier: LootTier) -> StashItem {
     }
 }
 
+#[path = "heist_ai.rs"]
+mod heist_ai;
+
 fn lerp_angle(from: f32, to: f32, t: f32) -> f32 {
     let mut diff = to - from;
     while diff > std::f32::consts::PI {
@@ -2099,6 +2336,7 @@ mod tests {
             vehicle_spawns: vec![],
             loot_zones: vec![],
             exfil_zones: vec![],
+            heist_sites: vec![],
         }
     }
 
@@ -2224,6 +2462,7 @@ mod tests {
                 speed: 0.0,
                 hp: 10.0,
                 driver_id: Some(id),
+                law: false,
             },
         );
         {
@@ -2324,6 +2563,7 @@ mod tests {
                 speed: 0.0,
                 hp: CAR_HP,
                 driver_id: None,
+                law: false,
             },
         );
         world.death_crates.push(TrackedCrate {
@@ -2411,7 +2651,7 @@ mod tests {
             a.armor = 10.0;
             a.health = 100.0;
         }
-        world.apply_actor_damage(id, 18.0);
+        world.apply_actor_damage(id, 18.0, None);
         let a = &world.actors[&id];
         assert!((a.armor - 0.0).abs() < 0.01);
         assert!((a.health - 92.0).abs() < 0.01);
@@ -2424,6 +2664,7 @@ mod tests {
             name: name.into(),
             role: role.into(),
             max_hp: hp,
+            appearance: default_appearance(),
         }
     }
 
@@ -2547,5 +2788,153 @@ mod tests {
             "foe hp {}",
             world.actors[&foe].health
         );
+    }
+
+    fn yard_heist() -> MapData {
+        let mut map = wall_map();
+        map.obstacles.clear();
+        map.heist_sites = vec![crate::protocol::HeistSite {
+            id: "yard".into(),
+            name: "Yard Vault".into(),
+            kind: crate::protocol::HeistKind::Vault,
+            x: 20.0,
+            y: 8.0,
+            width: 8.0,
+            depth: 8.0,
+            z_min: 0.0,
+            z_max: 4.0,
+            quiet_x: 10.0,
+            quiet_y: 10.0,
+            quiet_z: 0.0,
+            quiet_secs: 0.4,
+            loud_x: 30.0,
+            loud_y: 10.0,
+            loud_z: 0.0,
+            loud_secs: 0.2,
+            loot_tier: LootTier::Epic,
+        }];
+        map
+    }
+
+    fn place(world: &mut World, id: Uuid, x: f32, y: f32) {
+        let actor = world.actors.get_mut(&id).unwrap();
+        actor.x = x;
+        actor.y = y;
+        actor.z = 0.0;
+    }
+
+    #[test]
+    fn quiet_breach_spawns_bag_without_immediate_alarm() {
+        let mut world = World::new(yard_heist());
+        let pid = world.register_squad("crew".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        place(&mut world, id, 10.0, 10.0);
+        assert!(world.advance_heist(id, DT));
+        for _ in 0..12 {
+            world.advance_heist(id, DT);
+        }
+        let job = &world.heists[0];
+        assert_eq!(job.state, crate::protocol::HeistState::Breached);
+        assert!(!job.alarm);
+        assert!(job.quiet_alarm_in > 0.0);
+        assert_eq!(world.death_crates.len(), 1);
+        assert!(world.death_crates[0].data.items[0].item_name.contains("Take"));
+        let squad = world.actors[&id].squad_id;
+        assert!(world.crew_heat[&squad].heat < 1.0);
+    }
+
+    #[test]
+    fn loud_breach_raises_heat_and_site_alarm() {
+        let mut world = World::new(yard_heist());
+        let pid = world.register_squad("crew".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        place(&mut world, id, 30.0, 10.0);
+        assert!(world.advance_heist(id, DT));
+        for _ in 0..8 {
+            world.advance_heist(id, DT);
+        }
+        let job = &world.heists[0];
+        assert_eq!(job.state, crate::protocol::HeistState::Breached);
+        assert!(job.alarm);
+        let squad = world.actors[&id].squad_id;
+        assert!(world.crew_heat[&squad].heat >= 2.0);
+        assert!(world.notices.iter().any(|n| n.kind == "heist_alarm"));
+        assert!(world.actors.values().any(|a| a.npc == NpcKind::Guard && a.alert));
+    }
+
+    #[test]
+    fn heat_decays_when_law_cannot_see_the_crew() {
+        let mut world = World::new(yard_heist());
+        let pid = world.register_squad("crew".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        let squad = world.actors[&id].squad_id;
+        world.note_gunfire(squad, 10.0, 10.0, 0.0);
+        assert!(world.crew_heat[&squad].heat > 0.1);
+        for actor in world.actors.values_mut() {
+            if actor.npc.is_law() {
+                actor.health = 0.0;
+            }
+        }
+        for _ in 0..500 {
+            world.tick_heat_and_response();
+        }
+        let heat = world.crew_heat.get(&squad).map(|h| h.heat).unwrap_or(0.0);
+        assert!(heat < 0.05, "heat {heat}");
+    }
+
+    #[test]
+    fn guard_los_respects_tall_cover() {
+        let mut world = World::new(yard_heist());
+        let guard = world
+            .actors
+            .values()
+            .find(|a| a.npc == NpcKind::Guard)
+            .unwrap()
+            .id;
+        place(&mut world, guard, 8.0, 10.0);
+        world.actors.get_mut(&guard).unwrap().alert = true;
+        world.map.obstacles = vec![Obstacle {
+            id: "tower".into(),
+            x: 12.0,
+            y: 0.0,
+            width: 2.0,
+            depth: 20.0,
+            z_min: 0.0,
+            z_max: 14.0,
+        }];
+        let pid = world.register_squad("crew".into(), 1);
+        let id = world.deploy(pid, vec![weapon(18)]).unwrap();
+        place(&mut world, id, 20.0, 10.0);
+        let input = world.hostile_think(guard);
+        assert!(!input.shoot);
+        assert!(!world.actors[&guard].seen);
+    }
+
+    #[test]
+    fn rival_hears_the_site_without_a_wallhack() {
+        let mut world = World::new(yard_heist());
+        let crew_player = world.register_squad("crew".into(), 1);
+        let crew = world.deploy(crew_player, vec![weapon(18)]).unwrap();
+        place(&mut world, crew, 30.0, 10.0);
+        for _ in 0..8 {
+            world.advance_heist(crew, DT);
+        }
+        let rival_player = world.register_squad("rival".into(), 2);
+        let rival = world.deploy(rival_player, vec![weapon(18)]).unwrap();
+        place(&mut world, rival, 70.0, 70.0);
+        let snap = world.snapshot_for(rival_player);
+        let crate::protocol::ServerMessage::Snapshot {
+            players,
+            heists,
+            alarms,
+            ..
+        } = snap
+        else {
+            panic!("snapshot");
+        };
+        assert!(players.iter().all(|p| p.id != crew));
+        assert!(heists.iter().any(|h| h.alarm && h.id == "yard"));
+        assert!(alarms.iter().any(|a| a.kind == "heist"));
+        assert!(alarms.iter().all(|a| a.kind != "gunfire" || a.x != 30.0));
     }
 }

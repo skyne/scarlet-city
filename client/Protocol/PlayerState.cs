@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v3
+// Protocol scarlet.city v7
 
 using System;
 using System.Collections.Generic;
@@ -69,6 +69,9 @@ public sealed class PlayerState
 
     [JsonPropertyName("last_processed_input_seq")]
     public uint LastProcessedInputSeq { get; set; }
+
+    [JsonPropertyName("appearance")]
+    public CharacterAppearance Appearance { get; set; } = null!;
 
 }
 
