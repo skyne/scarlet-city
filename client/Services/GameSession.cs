@@ -1,8 +1,18 @@
 using System.Diagnostics;
 using ScarletCity.Client.Rendering;
+using ScarletCity.Client.Simulation;
 using ScarletCity.Protocol;
 
 namespace ScarletCity.Client.Services;
+
+public enum SessionPhase
+{
+    Menu,
+    Connecting,
+    Hideout,
+    Raid,
+    Summary
+}
 
 public sealed class DebugStats
 {
@@ -22,6 +32,15 @@ public sealed class DebugStats
     public float Z { get; set; }
     public float YawDeg { get; set; }
     public bool InVehicle { get; set; }
+    public float PredX { get; set; }
+    public float PredY { get; set; }
+    public float PredZ { get; set; }
+    public float ServerX { get; set; }
+    public float ServerY { get; set; }
+    public float ServerZ { get; set; }
+    public float PredError { get; set; }
+    public int Pending { get; set; }
+    public uint AckSeq { get; set; }
 
     public string Text()
     {
@@ -33,9 +52,106 @@ public sealed class DebugStats
             $"tick       {ServerTick}   snap {SnapshotHz:0.0} Hz  (sim 20 Hz)\n" +
             $"input seq  {InputSeq}   ws {(Connected ? "up" : "down")}\n" +
             $"pos        {X:0.00}, {Y:0.00}, {Z:0.00}   yaw {YawDeg:0}°\n" +
+            $"pred       {PredX:0.00}, {PredY:0.00}, {PredZ:0.00}\n" +
+            $"server     {ServerX:0.00}, {ServerY:0.00}, {ServerZ:0.00}\n" +
+            $"err        {PredError:0.03} m   pending {Pending}  ack {AckSeq}\n" +
+            $"ghosts     gold pred  cyan server  purple interp\n" +
             $"vehicle    {(InVehicle ? "yes" : "on foot")}\n" +
             $"ents       players {Players}  vehicles {Vehicles}  shots {Projectiles}";
     }
+}
+
+public sealed class ProfileStats
+{
+    public bool Visible { get; set; }
+    public double PeriodMs { get; private set; }
+    public double WorkMs { get; private set; }
+    public double DelayMs { get; private set; }
+    public double InputMs { get; private set; }
+    public double SizeMs { get; private set; }
+    public double LogicMs { get; private set; }
+    public double SendMs { get; private set; }
+    public double ComposeMs { get; private set; }
+    public double DrawMs { get; private set; }
+    public double OtherMs { get; private set; }
+    public int DrawOps { get; private set; }
+    public int JsCalls { get; private set; }
+    public double PeakPeriodMs { get; private set; }
+    public double PeakDrawMs { get; private set; }
+    public double PeakComposeMs { get; private set; }
+    public double PeakSendMs { get; private set; }
+    public double CapSettingMs { get; set; }
+
+    public void Push(in FrameProbe probe, double workMs, double delayMs, double periodMs)
+    {
+        WorkMs = Smooth(WorkMs, workMs);
+        DelayMs = Smooth(DelayMs, delayMs);
+        PeriodMs = Smooth(PeriodMs, periodMs);
+        InputMs = Smooth(InputMs, probe.InputMs);
+        SizeMs = Smooth(SizeMs, probe.SizeMs);
+        LogicMs = Smooth(LogicMs, probe.LogicMs);
+        SendMs = Smooth(SendMs, probe.SendMs);
+        ComposeMs = Smooth(ComposeMs, probe.ComposeMs);
+        DrawMs = Smooth(DrawMs, probe.DrawMs);
+        var named = probe.InputMs + probe.SizeMs + probe.LogicMs + probe.SendMs + probe.ComposeMs + probe.DrawMs;
+        OtherMs = Smooth(OtherMs, Math.Max(0, workMs - named));
+        DrawOps = probe.DrawOps;
+        JsCalls = probe.JsCalls;
+
+        if (periodMs > PeakPeriodMs) PeakPeriodMs = periodMs;
+        if (probe.DrawMs > PeakDrawMs) PeakDrawMs = probe.DrawMs;
+        if (probe.ComposeMs > PeakComposeMs) PeakComposeMs = probe.ComposeMs;
+        if (probe.SendMs > PeakSendMs) PeakSendMs = probe.SendMs;
+    }
+
+    public void DecayPeaks()
+    {
+        PeakPeriodMs *= 0.92;
+        PeakDrawMs *= 0.92;
+        PeakComposeMs *= 0.92;
+        PeakSendMs *= 0.92;
+    }
+
+    public string Text()
+    {
+        var fps = PeriodMs > 0 ? 1000.0 / PeriodMs : 0;
+        return
+            "Scarlet profile  (F4)\n" +
+            "smoothed; peaks decay\n" +
+            $"period     {PeriodMs,6:0.00} ms   {fps,5:0.0} fps\n" +
+            $"work       {Line(WorkMs)}\n" +
+            $"cap        {Line(DelayMs)}   {(CapSettingMs <= 0 ? "off" : $"{CapSettingMs:0} ms")}\n" +
+            $"input      {Line(InputMs)}   js\n" +
+            $"size       {Line(SizeMs)}   js\n" +
+            $"logic      {Line(LogicMs)}\n" +
+            $"send       {Line(SendMs)}   ws\n" +
+            $"compose    {Line(ComposeMs)}   ops {DrawOps}\n" +
+            $"draw       {Line(DrawMs)}   js + json\n" +
+            $"other      {Line(OtherMs)}\n" +
+            $"js calls   {JsCalls} / frame\n" +
+            $"peak       period {PeakPeriodMs:0.0}  draw {PeakDrawMs:0.00}  compose {PeakComposeMs:0.00}  send {PeakSendMs:0.00}";
+    }
+
+    string Line(double ms)
+    {
+        var pct = PeriodMs > 0 ? ms / PeriodMs * 100.0 : 0;
+        return $"{ms,6:0.00} ms  {pct,4:0}%";
+    }
+
+    static double Smooth(double ema, double sample) =>
+        ema <= 0 ? sample : ema * 0.85 + sample * 0.15;
+}
+
+public struct FrameProbe
+{
+    public double InputMs;
+    public double SizeMs;
+    public double LogicMs;
+    public double SendMs;
+    public double ComposeMs;
+    public double DrawMs;
+    public int DrawOps;
+    public int JsCalls;
 }
 
 public sealed class GameSession : IAsyncDisposable
@@ -44,50 +160,94 @@ public sealed class GameSession : IAsyncDisposable
     readonly IRenderer _renderer;
     readonly IInputSource _input;
     readonly IsoCamera _camera;
+    readonly GameStateStore _store;
     readonly Stopwatch _clock = Stopwatch.StartNew();
 
     public Guid PlayerId { get; private set; }
+    public Guid ActorId { get; private set; }
     public MapData? Map { get; private set; }
     public ServerMessage.Snapshot? Snapshot { get; private set; }
     public string Status { get; private set; } = "disconnected";
     public string LastEvent { get; set; } = "";
     public DebugStats Debug { get; } = new();
+    public ProfileStats Profile { get; } = new();
+    public SessionPhase Phase { get; private set; } = SessionPhase.Menu;
+    public int Cash { get; private set; }
+    public List<StashItem> Stash { get; private set; } = new();
+    public List<StashItem> DeployedLoadout { get; private set; } = new();
+    public string PlayerName { get; private set; } = "";
+    public ServerMessage.RaidEnded? LastRaid { get; private set; }
+    public Guid? SelectedWeaponId { get; set; }
+    public Guid? SelectedMedId { get; set; }
+
+    /// <summary>Target frame time in milliseconds. 0 runs uncapped; set this for a later fps or vsync cap.</summary>
+    public double FrameCapMs { get; set; }
 
     uint _seq;
     bool _running;
-    long _lastFrameTs;
+    long _simClock;
+    double _simAccum;
+    bool _latchShoot;
+    bool _latchInteract;
     double _fpsEma;
     int _snapCount;
     double _snapWindowStart;
     long _lastPingTs;
+    long _lastPeakDecay;
+    FrameProbe _probe;
     const long PingEveryMs = 500;
 
-    public GameSession(IGameTransport transport, IRenderer renderer, IInputSource input, IsoCamera camera)
+    public GameSession(
+        IGameTransport transport,
+        IRenderer renderer,
+        IInputSource input,
+        IsoCamera camera,
+        GameStateStore store)
     {
         _transport = transport;
         _renderer = renderer;
         _input = input;
         _camera = camera;
+        _store = store;
         _transport.MessageReceived += OnMessage;
     }
 
     public async Task StartAsync(string wsUrl, string name)
     {
+        PlayerName = name;
+        Phase = SessionPhase.Connecting;
         Status = "connecting";
         await _input.AttachAsync();
         await _transport.ConnectAsync(new Uri(wsUrl));
         await _transport.SendAsync(new ClientMessage.Join { Name = name });
         Status = "connected";
         _running = true;
-        _lastFrameTs = _clock.ElapsedMilliseconds;
+        _simClock = Stopwatch.GetTimestamp();
+        _simAccum = 0;
         _snapWindowStart = _clock.Elapsed.TotalSeconds;
         _ = Loop();
+    }
+
+    public async Task DeployAsync()
+    {
+        var ids = new List<Guid>();
+        if (SelectedWeaponId is { } w) ids.Add(w);
+        if (SelectedMedId is { } m) ids.Add(m);
+        await _transport.SendAsync(new ClientMessage.Deploy { LoadoutItemIds = ids });
+    }
+
+    public void DismissSummary()
+    {
+        LastRaid = null;
+        if (Phase == SessionPhase.Summary)
+            Phase = SessionPhase.Hideout;
     }
 
     async Task Loop()
     {
         while (_running)
         {
+            var start = Stopwatch.GetTimestamp();
             try
             {
                 await TickOnce();
@@ -96,27 +256,78 @@ public sealed class GameSession : IAsyncDisposable
             {
                 Status = "loop-error";
             }
-            await Task.Delay(16);
+            var afterWork = Stopwatch.GetTimestamp();
+            var workMs = MsBetween(start, afterWork);
+            var delayMs = 0.0;
+            if (FrameCapMs > 0)
+            {
+                var spareMs = FrameCapMs - workMs;
+                if (spareMs >= 1)
+                {
+                    var delayStart = Stopwatch.GetTimestamp();
+                    await Task.Delay((int)Math.Min(spareMs, 250));
+                    delayMs = MsBetween(delayStart, Stopwatch.GetTimestamp());
+                }
+            }
+            // Blazor WASM has one thread. With no browser timer, this loop's
+            // continuations run forever and clicks, drawing, and the socket never get a turn.
+            // Delay(1) only yields; it is not the frame cap.
+            if (delayMs == 0)
+            {
+                var delayStart = Stopwatch.GetTimestamp();
+                await Task.Delay(1);
+                delayMs = MsBetween(delayStart, Stopwatch.GetTimestamp());
+            }
+            var periodMs = workMs + delayMs;
+            var instFps = 1000.0 / Math.Max(periodMs, 0.001);
+            _fpsEma = _fpsEma <= 1 ? instFps : _fpsEma * 0.9 + instFps * 0.1;
+            Debug.Fps = _fpsEma;
+            Debug.FrameMs = periodMs;
+            Profile.CapSettingMs = FrameCapMs;
+            Profile.Push(_probe, workMs, delayMs, periodMs);
+            var now = _clock.ElapsedMilliseconds;
+            if (now - _lastPeakDecay >= 1000)
+            {
+                _lastPeakDecay = now;
+                Profile.DecayPeaks();
+            }
         }
     }
+
+    static double MsBetween(long a, long b) =>
+        (b - a) * 1000.0 / Stopwatch.Frequency;
 
     async Task TickOnce()
     {
         var now = _clock.ElapsedMilliseconds;
-        var dtMs = Math.Max(1, now - _lastFrameTs);
-        _lastFrameTs = now;
-        var instFps = 1000.0 / dtMs;
-        _fpsEma = _fpsEma <= 1 ? instFps : _fpsEma * 0.9 + instFps * 0.1;
+        var simNow = Stopwatch.GetTimestamp();
+        var frameSec = Math.Clamp(MsBetween(_simClock, simNow) / 1000.0, 0, 0.25);
+        _simClock = simNow;
 
+        _probe = default;
+        var mark = Stopwatch.GetTimestamp();
         var frame = await _input.PollAsync();
+        _probe.InputMs = MsBetween(mark, Stopwatch.GetTimestamp());
+        _probe.JsCalls++;
         if (frame.ToggleDebug)
             Debug.Visible = !Debug.Visible;
+        if (frame.ToggleProfile)
+            Profile.Visible = !Profile.Visible;
 
+        mark = Stopwatch.GetTimestamp();
         var size = await _renderer.GetSizeAsync();
+        _probe.SizeMs = MsBetween(mark, Stopwatch.GetTimestamp());
+        _probe.JsCalls++;
         var w = size.Length > 0 ? size[0] : 1280;
         var h = size.Length > 1 ? size[1] : 720;
 
-        var local = Snapshot?.Players.FirstOrDefault(p => p.Id == PlayerId);
+        mark = Stopwatch.GetTimestamp();
+        var inRaid = Phase == SessionPhase.Raid && ActorId != Guid.Empty;
+        var renderSnap = inRaid ? _store.RenderSnapshot(now, 0) : Snapshot;
+        var local = renderSnap != null ? _store.LocalActor(renderSnap) : null;
+        if (local == null && Snapshot != null)
+            local = Snapshot.Players.FirstOrDefault(p => p.Id == ActorId);
+
         if (Map != null)
             _camera.Follow(w, h, local, Map);
 
@@ -131,20 +342,61 @@ public sealed class GameSession : IAsyncDisposable
         float moveY = frame.MoveY;
         if (!inVehicle)
             IsoProjection.ScreenWasdToWorld(frame.MoveX, frame.MoveY, out moveX, out moveY);
+        _probe.LogicMs = MsBetween(mark, Stopwatch.GetTimestamp());
+
+        mark = Stopwatch.GetTimestamp();
+        if (inRaid)
+        {
+            _simAccum += frameSec;
+            _latchShoot |= frame.Shoot;
+            _latchInteract |= frame.Interact;
+        }
+        else
+        {
+            _simAccum = 0;
+            _latchShoot = false;
+            _latchInteract = false;
+        }
+
+        if (inRaid && _simAccum > LocalPhysics.FixedDt &&
+            (!_transport.IsConnected || PlayerId == Guid.Empty))
+            _simAccum = LocalPhysics.FixedDt;
 
         if (_transport.IsConnected && PlayerId != Guid.Empty)
         {
-            await _transport.SendAsync(new ClientMessage.Input
+            if (inRaid && _simAccum >= LocalPhysics.FixedDt)
             {
-                Seq = _seq++,
-                MoveX = moveX,
-                MoveY = moveY,
-                AscendDescend = frame.AscendDescend,
-                AimAngle = aimAngle,
-                Shoot = frame.Shoot,
-                Interact = frame.Interact,
-                Brake = frame.Brake
-            });
+                _simAccum -= LocalPhysics.FixedDt;
+                if (_simAccum > LocalPhysics.FixedDt)
+                    _simAccum = LocalPhysics.FixedDt;
+                var pending = new PendingInput
+                {
+                    Seq = _seq++,
+                    Dt = LocalPhysics.FixedDt,
+                    MoveX = moveX,
+                    MoveY = moveY,
+                    AscendDescend = frame.AscendDescend,
+                    AimAngle = aimAngle,
+                    Shoot = _latchShoot,
+                    Interact = _latchInteract,
+                    Brake = frame.Brake
+                };
+                _latchShoot = frame.Shoot;
+                _latchInteract = false;
+                await _transport.SendAsync(new ClientMessage.Input
+                {
+                    Seq = pending.Seq,
+                    Dt = pending.Dt,
+                    MoveX = pending.MoveX,
+                    MoveY = pending.MoveY,
+                    AscendDescend = pending.AscendDescend,
+                    AimAngle = pending.AimAngle,
+                    Shoot = pending.Shoot,
+                    Interact = pending.Interact,
+                    Brake = pending.Brake
+                });
+                _store.QueueAndPredict(pending);
+            }
 
             if (now - _lastPingTs >= PingEveryMs)
             {
@@ -152,15 +404,28 @@ public sealed class GameSession : IAsyncDisposable
                 await _transport.SendAsync(new ClientMessage.Ping { ClientMs = (ulong)now });
             }
         }
+        _probe.SendMs = MsBetween(mark, Stopwatch.GetTimestamp());
 
-        if (Map != null && Snapshot != null)
+        if (inRaid)
+            _store.RenderAlpha = (float)Math.Clamp(_simAccum / LocalPhysics.FixedDt, 0, 1);
+
+        if (inRaid && Map != null)
         {
-            var scene = SceneComposer.Compose(w, h, Map, Snapshot, PlayerId, aimX, aimY, aimAngle);
+            mark = Stopwatch.GetTimestamp();
+            renderSnap = _store.RenderSnapshot(now, aimAngle);
+            var drawn = _store.LocalActor(renderSnap);
+            if (drawn != null)
+                _camera.Follow(w, h, drawn, Map);
+            var ghosts = Debug.Visible ? _store.BuildGhosts(now) : null;
+            var scene = SceneComposer.Compose(w, h, Map, renderSnap, ActorId, aimX, aimY, aimAngle, ghosts);
+            _probe.ComposeMs = MsBetween(mark, Stopwatch.GetTimestamp());
+            _probe.DrawOps = scene.Ops.Count;
+            mark = Stopwatch.GetTimestamp();
             await _renderer.DrawAsync(scene);
+            _probe.DrawMs = MsBetween(mark, Stopwatch.GetTimestamp());
+            _probe.JsCalls++;
         }
 
-        Debug.Fps = _fpsEma;
-        Debug.FrameMs = dtMs;
         Debug.InputSeq = _seq;
         Debug.Connected = _transport.IsConnected;
         Debug.ServerTick = Snapshot?.Tick ?? 0;
@@ -169,11 +434,30 @@ public sealed class GameSession : IAsyncDisposable
         Debug.Projectiles = Snapshot?.Projectiles.Count ?? 0;
         if (local != null)
         {
-            Debug.X = local.X;
-            Debug.Y = local.Y;
-            Debug.Z = local.Z;
+            Debug.X = inRaid ? _store.Predicted.X : local.X;
+            Debug.Y = inRaid ? _store.Predicted.Y : local.Y;
+            Debug.Z = inRaid ? _store.Predicted.Z : local.Z;
             Debug.YawDeg = aimAngle * 180f / MathF.PI;
             Debug.InVehicle = inVehicle;
+        }
+        if (inRaid && _store.HasPredicted)
+        {
+            Debug.PredX = _store.Predicted.X;
+            Debug.PredY = _store.Predicted.Y;
+            Debug.PredZ = _store.Predicted.Z;
+            var srv = _store.LastServerLocal;
+            if (srv != null)
+            {
+                Debug.ServerX = srv.X;
+                Debug.ServerY = srv.Y;
+                Debug.ServerZ = srv.Z;
+                var dx = Debug.PredX - srv.X;
+                var dy = Debug.PredY - srv.Y;
+                var dz = Debug.PredZ - srv.Z;
+                Debug.PredError = MathF.Sqrt(dx * dx + dy * dy + dz * dz);
+            }
+            Debug.Pending = _store.PendingCount;
+            Debug.AckSeq = _store.LastAckSeq;
         }
     }
 
@@ -183,11 +467,35 @@ public sealed class GameSession : IAsyncDisposable
         {
             case ServerMessage.Welcome welcome:
                 PlayerId = welcome.PlayerId;
+                ActorId = welcome.ActorId ?? Guid.Empty;
                 Map = welcome.Map;
-                Status = "in-city";
+                _store.Map = welcome.Map;
+                Status = "hideout";
+                if (Phase == SessionPhase.Connecting || Phase == SessionPhase.Menu)
+                    Phase = SessionPhase.Hideout;
+                break;
+            case ServerMessage.ProfileState profile:
+                Cash = profile.Cash;
+                Stash = profile.Stash;
+                DeployedLoadout = profile.DeployedLoadout;
+                if (profile.ActorId is { } aid && aid != Guid.Empty)
+                {
+                    ActorId = aid;
+                    _store.ActorId = aid;
+                    Phase = SessionPhase.Raid;
+                    Status = "in-city";
+                }
+                else if (Phase == SessionPhase.Raid)
+                {
+                    ActorId = Guid.Empty;
+                    _store.ActorId = Guid.Empty;
+                }
+                SelectedWeaponId ??= Stash.FirstOrDefault(i => i.ItemType.Equals("Weapon", StringComparison.OrdinalIgnoreCase))?.Id;
+                SelectedMedId ??= Stash.FirstOrDefault(i => i.ItemType.Equals("Med", StringComparison.OrdinalIgnoreCase))?.Id;
                 break;
             case ServerMessage.Snapshot snap:
                 Snapshot = snap;
+                _store.ApplySnapshot(snap, _clock.ElapsedMilliseconds);
                 _snapCount++;
                 var t = _clock.Elapsed.TotalSeconds;
                 var window = t - _snapWindowStart;
@@ -198,6 +506,15 @@ public sealed class GameSession : IAsyncDisposable
                     _snapWindowStart = t;
                 }
                 break;
+            case ServerMessage.RaidEnded ended:
+                LastRaid = ended;
+                Phase = SessionPhase.Summary;
+                Status = ended.Outcome;
+                ActorId = Guid.Empty;
+                _store.Reset();
+                _store.Map = Map;
+                Snapshot = null;
+                break;
             case ServerMessage.Pong pong:
                 var rtt = _clock.ElapsedMilliseconds - (long)pong.ClientMs;
                 if (rtt >= 0 && rtt < 5000)
@@ -206,6 +523,14 @@ public sealed class GameSession : IAsyncDisposable
                 break;
             case ServerMessage.Event ev:
                 LastEvent = $"{ev.Kind}: {ev.Message}";
+                if (ev.Kind == "deploy" && Guid.TryParse(ev.Message, out var deployedId))
+                {
+                    ActorId = deployedId;
+                    _store.ActorId = deployedId;
+                    _store.Map = Map;
+                    Phase = SessionPhase.Raid;
+                    Status = "in-city";
+                }
                 break;
         }
     }

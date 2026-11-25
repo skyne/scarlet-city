@@ -104,6 +104,35 @@ pub fn los_blocked(
     })
 }
 
+const EYE_HEIGHT: f32 = 1.7;
+
+/// 2.5D sightline: a 2D ray vs extruded AABB. If the observer's eye (`z + 1.7`)
+/// **or** the target's altitude is above an obstacle's `z_max`, that volume
+/// does not block (flyers see over sheds; rooftop targets peek over low walls).
+pub fn sightline_blocked(
+    ox: f32,
+    oy: f32,
+    oz: f32,
+    tx: f32,
+    ty: f32,
+    tz: f32,
+    obstacles: &[Obstacle],
+) -> bool {
+    let eye_z = oz + EYE_HEIGHT;
+    obstacles.iter().any(|o| {
+        if eye_z > o.z_max || tz > o.z_max {
+            return false;
+        }
+        segment_hits_aabb(ox, oy, tx, ty, o.x, o.y, o.width, o.depth)
+    })
+}
+
+pub fn in_vision_radius(ox: f32, oy: f32, tx: f32, ty: f32, radius: f32) -> bool {
+    let dx = tx - ox;
+    let dy = ty - oy;
+    dx * dx + dy * dy <= radius * radius
+}
+
 pub fn point_in_rect(px: f32, py: f32, x: f32, y: f32, w: f32, d: f32) -> bool {
     px >= x && px <= x + w && py >= y && py <= y + d
 }
@@ -137,5 +166,18 @@ mod tests {
         let deck = cube(4.0, 5.5);
         assert!(!volume_hits_obstacle(5.0, 5.0, 0.45, 0.0, 1.8, &deck));
         assert!(volume_hits_obstacle(5.0, 5.0, 1.0, 4.2, 5.4, &deck));
+    }
+
+    #[test]
+    fn ground_los_blocked_by_cube() {
+        let wall = cube(0.0, 6.0);
+        assert!(sightline_blocked(-2.0, 5.0, 0.0, 12.0, 5.0, 0.0, &[wall.clone()]));
+    }
+
+    #[test]
+    fn flyer_sees_over_low_building() {
+        let shed = cube(0.0, 3.0);
+        assert!(!sightline_blocked(-2.0, 5.0, 4.0, 12.0, 5.0, 0.0, &[shed.clone()]));
+        assert!(!sightline_blocked(-2.0, 5.0, 0.0, 12.0, 5.0, 4.0, &[shed]));
     }
 }

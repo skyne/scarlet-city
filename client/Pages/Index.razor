@@ -3,37 +3,129 @@
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
-<div class="hud">
-    <h1>Scarlet City</h1>
-    <p>@Session.Status</p>
-    <p>@HudLine()</p>
-    <p>@Session.LastEvent</p>
-</div>
-<canvas id="game-canvas"></canvas>
-@if (Session.Debug.Visible)
+<canvas id="game-canvas" class="@(Session.Phase == SessionPhase.Raid ? "" : "hidden-canvas")"></canvas>
+
+@if (Session.Phase is SessionPhase.Menu or SessionPhase.Connecting)
 {
-    <pre class="debug-overlay">@Session.Debug.Text()</pre>
+    <div class="panel hideout">
+        <h1>Scarlet City</h1>
+        <p class="lede">Hideout access. Same callsign keeps your stash.</p>
+        <label>
+            Callsign
+            <input @bind="_name" @bind:event="oninput" maxlength="24" disabled="@_busy" />
+        </label>
+        <button class="primary" disabled="@_busy" @onclick="Connect">Enter hideout</button>
+        <p class="muted">@Session.Status @Session.LastEvent</p>
+    </div>
 }
-<div class="help">WASD (camera: W = up the screen) · mouse aim · click shoot
-E enter/exit / loot · Space/C altitude (hover)
-Shift brake · F3 debug stats</div>
+else if (Session.Phase == SessionPhase.Hideout)
+{
+    <div class="panel hideout">
+        <h1>Hideout</h1>
+        <p class="cash">Cash <strong>$@Session.Cash</strong> · @Session.PlayerName</p>
+        <div class="cols">
+            <section>
+                <h2>Stash</h2>
+                <ul class="inv">
+                    @foreach (var item in Session.Stash)
+                    {
+                        <li>
+                            <span class="tag">@item.ItemType</span>
+                            @item.ItemName
+                            <span class="qty">×@item.Quantity</span>
+                        </li>
+                    }
+                    @if (Session.Stash.Count == 0)
+                    {
+                        <li class="muted">Empty — extract with loot to fill this.</li>
+                    }
+                </ul>
+            </section>
+            <section>
+                <h2>Loadout</h2>
+                <label>
+                    Weapon
+                    <select value="@Session.SelectedWeaponId" @onchange="OnWeapon">
+                        <option value="">— none —</option>
+                        @foreach (var w in Session.Stash.Where(i => i.ItemType.Equals("Weapon", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            <option value="@w.Id">@w.ItemName</option>
+                        }
+                    </select>
+                </label>
+                <label>
+                    Med
+                    <select value="@Session.SelectedMedId" @onchange="OnMed">
+                        <option value="">— none —</option>
+                        @foreach (var m in Session.Stash.Where(i => i.ItemType.Equals("Med", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            <option value="@m.Id">@m.ItemName</option>
+                        }
+                    </select>
+                </label>
+                <button class="primary" @onclick="Deploy">Deploy to City</button>
+                <p class="muted">Unextracted backpack is lost on death. Stand in a pad to bank gear.</p>
+            </section>
+        </div>
+    </div>
+}
+else if (Session.Phase == SessionPhase.Summary)
+{
+    var raid = Session.LastRaid;
+    <div class="panel hideout">
+        <h1>Raid @(raid?.Outcome == "extracted" ? "complete" : "failed")</h1>
+        <p>@raid?.Message</p>
+        <p class="cash">Cash <strong>$@raid?.Cash</strong>
+            @if (raid != null && raid.CashDelta != 0)
+            {
+                <span> (@(raid.CashDelta > 0 ? "+" : "")@raid.CashDelta)</span>
+            }
+        </p>
+        <h2>Banked</h2>
+        <ul class="inv">
+            @if (raid == null || raid.ItemsBanked.Count == 0)
+            {
+                <li class="muted">Nothing returned to stash.</li>
+            }
+            else
+            {
+                @foreach (var item in raid.ItemsBanked)
+                {
+                    <li><span class="tag">@item.ItemType</span> @item.ItemName</li>
+                }
+            }
+        </ul>
+        <button class="primary" @onclick="Session.DismissSummary">Back to hideout</button>
+    </div>
+}
+else
+{
+    <div class="hud">
+        <h1>Scarlet City</h1>
+        <p>@Session.Status</p>
+        <p>@HudLine()</p>
+        <p>@Session.LastEvent</p>
+    </div>
+    @if (Session.Debug.Visible)
+    {
+        <pre class="debug-overlay">@Session.Debug.Text()</pre>
+    }
+    @if (Session.Profile.Visible)
+    {
+        <pre class="profile-overlay">@Session.Profile.Text()</pre>
+    }
+    <div class="help">WASD (camera: W = up the screen) · mouse aim · click shoot
+E enter/exit / loot / death crates · Space/C altitude (hover)
+Shift brake · F3 debug (+ pred/server ghosts) · F4 profile</div>
+}
 
 @code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    string _name = $"Runner-{Random.Shared.Next(100, 999)}";
+    bool _busy;
+
+    protected override void OnInitialized()
     {
-        if (!firstRender) return;
         _ = Pulse();
-        try
-        {
-            var name = $"Runner-{Random.Shared.Next(100, 999)}";
-            var host = await Js.InvokeAsync<string>("eval", "window.location.hostname");
-            var ws = $"ws://{host}:3030/ws";
-            await Session.StartAsync(ws, name);
-        }
-        catch (Exception ex)
-        {
-            Session.LastEvent = ex.Message;
-        }
     }
 
     async Task Pulse()
@@ -41,17 +133,53 @@ Shift brake · F3 debug stats</div>
         while (true)
         {
             await Task.Delay(200);
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    async Task Connect()
+    {
+        _busy = true;
+        try
+        {
+            var host = await Js.InvokeAsync<string>("eval", "window.location.hostname");
+            var ws = $"ws://{host}:3030/ws";
+            await Session.StartAsync(ws, string.IsNullOrWhiteSpace(_name) ? "Runner" : _name.Trim());
+        }
+        catch (Exception ex)
+        {
+            Session.LastEvent = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    async Task Deploy() => await Session.DeployAsync();
+
+    void OnWeapon(ChangeEventArgs e)
+    {
+        Session.SelectedWeaponId = ParseId(e.Value);
+    }
+
+    void OnMed(ChangeEventArgs e)
+    {
+        Session.SelectedMedId = ParseId(e.Value);
+    }
+
+    static Guid? ParseId(object? v)
+    {
+        var s = v?.ToString();
+        return Guid.TryParse(s, out var id) ? id : null;
     }
 
     string HudLine()
     {
-        var me = Session.Snapshot?.Players.FirstOrDefault(p => p.Id == Session.PlayerId);
-        if (me is null) return "awaiting snapshot";
-        var z = me.Z;
+        var me = Session.Snapshot?.Players.FirstOrDefault(p => p.Id == Session.ActorId);
+        if (me is null) return "entering city…";
         var ex = me.Extracting ? $" extract {me.ExtractProgress:P0}" : "";
-        return $"xyz ({me.X:0.0}, {me.Y:0.0}, {z:0.0}) hp {me.Health:0}{ex}";
+        return $"xyz ({me.X:0.0}, {me.Y:0.0}, {me.Z:0.0}) hp {me.Health:0}{ex}  cash ${Session.Cash}";
     }
 
     public async ValueTask DisposeAsync() => await Session.DisposeAsync();

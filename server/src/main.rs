@@ -1,8 +1,10 @@
 mod collision;
+mod db;
 mod map;
 mod protocol;
 mod sim;
 
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -15,15 +17,22 @@ use axum::routing::get;
 use axum::Router;
 use futures_util::{SinkExt, StreamExt};
 use sim::{InputState, World, DT};
-use tokio::sync::{broadcast, mpsc, Mutex};
+use sqlx::SqlitePool;
+use tokio::sync::{mpsc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
-use crate::protocol::{ClientMessage, ServerMessage};
+use crate::protocol::{ClientMessage, ServerMessage, StashItem};
+
+struct ClientSlot {
+    player_id: Uuid,
+    tx: mpsc::UnboundedSender<String>,
+}
 
 struct AppState {
     world: Mutex<World>,
-    snapshots: broadcast::Sender<String>,
+    clients: Mutex<HashMap<Uuid, mpsc::UnboundedSender<String>>>,
+    db: SqlitePool,
     tick: AtomicU64,
 }
 
@@ -32,10 +41,13 @@ async fn main() {
     let map = map::load_map(map::default_map_path());
     println!("loaded map `{}`", map.name);
 
-    let (tx, _) = broadcast::channel::<String>(64);
+    let db = db::connect("game.db").await.expect("sqlite game.db");
+    println!("sqlite ready (game.db)");
+
     let state = Arc::new(AppState {
         world: Mutex::new(World::new(map)),
-        snapshots: tx.clone(),
+        clients: Mutex::new(HashMap::new()),
+        db,
         tick: AtomicU64::new(0),
     });
 
@@ -44,13 +56,16 @@ async fn main() {
         let mut interval = tokio::time::interval(Duration::from_secs_f32(DT));
         loop {
             interval.tick().await;
-            let json = {
+            let events = {
                 let mut world = tick_state.world.lock().await;
                 world.tick();
                 tick_state.tick.store(world.current_tick(), Ordering::Relaxed);
-                serde_json::to_string(&world.snapshot()).expect("snapshot json")
+                world.drain_events()
             };
-            let _ = tick_state.snapshots.send(json);
+            for ev in events {
+                handle_raid_event(&tick_state, ev).await;
+            }
+            broadcast_snapshots(&tick_state).await;
         }
     });
 
@@ -71,6 +86,95 @@ async fn main() {
     axum::serve(listener, app).await.expect("serve");
 }
 
+async fn broadcast_snapshots(state: &AppState) {
+    let clients: Vec<ClientSlot> = {
+        let guard = state.clients.lock().await;
+        guard
+            .iter()
+            .map(|(id, tx)| ClientSlot {
+                player_id: *id,
+                tx: tx.clone(),
+            })
+            .collect()
+    };
+    if clients.is_empty() {
+        return;
+    }
+    let world = state.world.lock().await;
+    for client in clients {
+        if world.squad(client.player_id).and_then(|s| s.controlled_actor_id).is_none() {
+            continue;
+        }
+        let snap = world.snapshot_for(client.player_id);
+        if let Ok(json) = serde_json::to_string(&snap) {
+            let _ = client.tx.send(json);
+        }
+    }
+}
+
+async fn handle_raid_event(state: &AppState, ev: sim::RaidEvent) {
+    let profile_id = {
+        let world = state.world.lock().await;
+        world.profile_id(ev.player_id)
+    };
+    let mut cash = 0;
+    let mut items_banked = ev.items_banked.clone();
+    if let Some(pid) = profile_id {
+        if ev.outcome == "extracted" {
+            if !items_banked.is_empty() {
+                let _ = db::insert_items(&state.db, pid, &items_banked).await;
+            }
+            cash = db::add_cash(&state.db, pid, ev.cash_delta)
+                .await
+                .unwrap_or(0);
+        } else {
+            items_banked.clear();
+            if let Ok(p) = db::load_profile(&state.db, pid).await {
+                cash = p.cash;
+            }
+        }
+    }
+    let ended = ServerMessage::RaidEnded {
+        outcome: ev.outcome,
+        cash,
+        cash_delta: ev.cash_delta,
+        items_banked: items_banked.clone(),
+        message: ev.message,
+    };
+    send_to_player(state, ev.player_id, &ended).await;
+    if let Some(pid) = profile_id {
+        if let Ok(profile) = db::load_profile(&state.db, pid).await {
+            send_profile(state, ev.player_id, &profile.stash, profile.cash, Vec::new(), None)
+                .await;
+        }
+    }
+}
+
+async fn send_to_player(state: &AppState, player_id: Uuid, msg: &ServerMessage) {
+    let json = serde_json::to_string(msg).unwrap();
+    let tx = state.clients.lock().await.get(&player_id).cloned();
+    if let Some(tx) = tx {
+        let _ = tx.send(json);
+    }
+}
+
+async fn send_profile(
+    state: &AppState,
+    player_id: Uuid,
+    stash: &[StashItem],
+    cash: i32,
+    deployed: Vec<StashItem>,
+    actor_id: Option<Uuid>,
+) {
+    let msg = ServerMessage::ProfileState {
+        cash,
+        stash: stash.to_vec(),
+        deployed_loadout: deployed,
+        actor_id,
+    };
+    send_to_player(state, player_id, &msg).await;
+}
+
 async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> impl IntoResponse {
     ws.on_upgrade(move |socket| client_session(socket, state))
 }
@@ -78,28 +182,12 @@ async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) ->
 async fn client_session(socket: WebSocket, state: Arc<AppState>) {
     let (mut sink, mut stream) = socket.split();
     let mut player_id: Option<Uuid> = None;
-    let mut rx = state.snapshots.subscribe();
     let (out_tx, mut out_rx) = mpsc::unbounded_channel::<String>();
 
     let writer = tokio::spawn(async move {
         while let Some(msg) = out_rx.recv().await {
             if sink.send(Message::Text(msg)).await.is_err() {
                 break;
-            }
-        }
-    });
-
-    let out_tx_snap = out_tx.clone();
-    let pump = tokio::spawn(async move {
-        loop {
-            match rx.recv().await {
-                Ok(json) => {
-                    if out_tx_snap.send(json).is_err() {
-                        break;
-                    }
-                }
-                Err(broadcast::error::RecvError::Lagged(_)) => continue,
-                Err(broadcast::error::RecvError::Closed) => break,
             }
         }
     });
@@ -125,22 +213,106 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                 if player_id.is_some() {
                     continue;
                 }
+                let name = sanitize_name(name);
+                let profile = match db::ensure_profile(&state.db, &name).await {
+                    Ok(p) => p,
+                    Err(e) => {
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: format!("profile error: {e}"),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                        continue;
+                    }
+                };
                 let mut world = state.world.lock().await;
-                let id = world.spawn_player(sanitize_name(name));
+                let id = world.register_squad(name.clone(), profile.id);
+                drop(world);
                 player_id = Some(id);
+                state.clients.lock().await.insert(id, out_tx.clone());
+                let map = {
+                    let world = state.world.lock().await;
+                    world.map.clone()
+                };
                 let welcome = ServerMessage::Welcome {
                     player_id: id,
-                    map: world.map.clone(),
+                    actor_id: None,
+                    map,
                 };
                 let _ = out_tx.send(serde_json::to_string(&welcome).unwrap());
-                let joined = ServerMessage::Event {
-                    kind: "join".into(),
-                    message: format!("{id} entered the city"),
+                let ps = ServerMessage::ProfileState {
+                    cash: profile.cash,
+                    stash: profile.stash,
+                    deployed_loadout: Vec::new(),
+                    actor_id: None,
                 };
-                let _ = out_tx.send(serde_json::to_string(&joined).unwrap());
+                let _ = out_tx.send(serde_json::to_string(&ps).unwrap());
+            }
+            ClientMessage::GetProfile => {
+                let Some(id) = player_id else { continue };
+                let profile_id = state.world.lock().await.profile_id(id);
+                if let Some(pid) = profile_id {
+                    if let Ok(profile) = db::load_profile(&state.db, pid).await {
+                        let deployed = state.world.lock().await.deployed_loadout(id);
+                        let actor_id = state
+                            .world
+                            .lock()
+                            .await
+                            .squad(id)
+                            .and_then(|s| s.controlled_actor_id);
+                        send_profile(&state, id, &profile.stash, profile.cash, deployed, actor_id)
+                            .await;
+                    }
+                }
+            }
+            ClientMessage::Deploy { loadout_item_ids } => {
+                let Some(id) = player_id else { continue };
+                let profile_id = match state.world.lock().await.profile_id(id) {
+                    Some(p) => p,
+                    None => continue,
+                };
+                let taken = match db::take_loadout(&state.db, profile_id, &loadout_item_ids).await {
+                    Ok(t) => t,
+                    Err(e) => {
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: format!("loadout error: {e}"),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                        continue;
+                    }
+                };
+                let deploy_result = {
+                    let mut world = state.world.lock().await;
+                    world.deploy(id, taken.clone())
+                };
+                match deploy_result {
+                    Ok(actor_id) => {
+                        let profile = db::load_profile(&state.db, profile_id).await.ok();
+                        if let Some(p) = profile {
+                            send_profile(&state, id, &p.stash, p.cash, taken, Some(actor_id)).await;
+                        }
+                        let ev = ServerMessage::Event {
+                            kind: "deploy".into(),
+                            message: format!("{actor_id}"),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    }
+                    Err(msg) => {
+                        if !taken.is_empty() {
+                            let _ = db::insert_items(&state.db, profile_id, &taken).await;
+                        }
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: msg,
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    }
+                }
             }
             ClientMessage::Input {
                 seq,
+                dt,
                 move_x,
                 move_y,
                 ascend_descend,
@@ -155,6 +327,7 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                     id,
                     InputState {
                         seq,
+                        dt,
                         move_x: move_x.clamp(-1.0, 1.0),
                         move_y: move_y.clamp(-1.0, 1.0),
                         ascend_descend: ascend_descend.clamp(-1.0, 1.0),
@@ -176,10 +349,10 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
     }
 
     if let Some(id) = player_id {
-        state.world.lock().await.remove_player(id);
+        state.clients.lock().await.remove(&id);
+        state.world.lock().await.remove_session(id);
     }
     writer.abort();
-    pump.abort();
 }
 
 fn sanitize_name(name: String) -> String {

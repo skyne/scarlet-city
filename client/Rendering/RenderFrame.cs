@@ -16,4 +16,5 @@ public sealed class DrawOp
     public string Stroke { get; set; } = "transparent";
     public string? Text { get; set; }
     public float Size { get; set; }
+    public float Alpha { get; set; } = 1f;
 }

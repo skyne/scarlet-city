@@ -1,3 +1,4 @@
+using ScarletCity.Client.Services;
 using ScarletCity.Protocol;
 
 namespace ScarletCity.Client.Rendering;
@@ -6,6 +7,9 @@ public static class SceneComposer
 {
     public const float Scale = 14f;
     public const float ZScale = 12f;
+    public const float VisionRadius = 32f;
+
+    static readonly Dictionary<string, float> BuildingAlpha = new();
 
     public static RenderFrame Compose(
         int width,
@@ -15,7 +19,8 @@ public static class SceneComposer
         Guid localId,
         float aimWorldX,
         float aimWorldY,
-        float clientAimAngle)
+        float clientAimAngle,
+        DebugGhosts? ghosts = null)
     {
         var frame = new RenderFrame { Width = width, Height = height };
         var focus = snap.Players.FirstOrDefault(p => p.Id == localId) ?? snap.Players.FirstOrDefault();
@@ -35,8 +40,9 @@ public static class SceneComposer
             DrawSlab(frame, road.X, road.Y, road.Width, road.Depth, 0, 0.05f, "#3a2a28", "#2a1c1b", P);
 
         var buildings = map.Obstacles.OrderBy(o => o.X + o.Y).ThenBy(o => o.ZMin);
+        P(fx, fy, fz, out var playerSx, out var playerSy);
         foreach (var o in buildings)
-            DrawBuilding(frame, o, P);
+            DrawBuilding(frame, o, playerSx, playerSy, fx, fy, P);
 
         foreach (var zone in snap.ExfilZones)
             DrawSlab(frame, zone.X, zone.Y, zone.Width, zone.Depth, zone.ZMin, zone.ZMax,
@@ -46,6 +52,21 @@ public static class SceneComposer
         {
             MaybeShadow(frame, loot.X, loot.Y, loot.Z, 0.5f, P);
             DrawDiamond(frame, loot.X, loot.Y, loot.Z, LootColor(loot.Tier), P);
+        }
+
+        foreach (var crate in snap.DeathCrates)
+        {
+            MaybeShadow(frame, crate.X, crate.Y, crate.Z, 0.7f, P);
+            DrawEntity(frame, crate.X, crate.Y, crate.Z, 1.1f, 1.1f, 0.9f, "#c9a227", P);
+            P(crate.X, crate.Y, crate.Z + 1.4f, out var cx, out var cy);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "text",
+                Pts = new[] { cx, cy },
+                Fill = "#ffe8a3",
+                Text = "Death crate",
+                Size = 11
+            });
         }
 
         foreach (var v in snap.Vehicles.OrderBy(v => v.X + v.Y).ThenBy(v => v.Z))
@@ -87,7 +108,82 @@ public static class SceneComposer
             });
         }
 
+        if (ghosts != null)
+            DrawNetGhosts(frame, ghosts, P);
+
+        P(fx, fy, fz, out var fowX, out var fowY);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "fow",
+            Pts = new[] { fowX, fowY, VisionRadius * Scale, VisionRadius * Scale * 0.5f },
+            Fill = "rgba(8,6,8,0.72)"
+        });
+
         return frame;
+    }
+
+    static void DrawNetGhosts(RenderFrame frame, DebugGhosts g, ProjectFn P)
+    {
+        // Predicted (solid you) is already drawn gold. Ghosts: server + delayed interp.
+        DrawGhostBody(frame, g.ServerX, g.ServerY, g.ServerZ, g.ServerYaw, "#4df0ff", "server", P);
+        if (g.HasDelayed)
+            DrawGhostBody(frame, g.DelayedX, g.DelayedY, g.DelayedZ, g.DelayedYaw, "#c77dff", "interp 90ms", P);
+        DrawGhostBody(frame, g.PredX, g.PredY, g.PredZ, g.PredYaw, "#ffe066", "pred", P, wireOnly: true);
+
+        P(g.ServerX, g.ServerY, g.ServerZ + 0.9f, out var sx, out var sy);
+        P(g.PredX, g.PredY, g.PredZ + 0.9f, out var px, out var py);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "line",
+            Pts = new[] { sx, sy, px, py },
+            Stroke = "rgba(77,240,255,0.85)",
+            Size = 2
+        });
+        if (g.HasDelayed)
+        {
+            P(g.DelayedX, g.DelayedY, g.DelayedZ + 0.9f, out var dx, out var dy);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "line",
+                Pts = new[] { sx, sy, dx, dy },
+                Stroke = "rgba(199,125,255,0.7)",
+                Size = 1.5f
+            });
+        }
+
+        if (g.InVehicle)
+        {
+            DrawBox(frame,
+                g.VehicleServerX - 0.9f, g.VehicleServerY - 1.6f, 1.8f, 3.2f,
+                g.VehicleServerZ, g.VehicleServerZ + 1.1f,
+                "#4df0ff", P, 0.28f);
+            DrawFacing(frame, g.VehicleServerX, g.VehicleServerY, g.VehicleServerZ, g.VehicleServerYaw, 2.4f, "#4df0ff", P, 0.55f);
+        }
+    }
+
+    static void DrawGhostBody(RenderFrame frame, float x, float y, float z, float yaw, string color, string label,
+        ProjectFn P, bool wireOnly = false)
+    {
+        P(x, y, 0, out var gx, out var gy);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "ring",
+            Pts = new[] { gx, gy, 10f },
+            Stroke = color,
+            Size = 1.5f,
+            Alpha = 0.9f
+        });
+        DrawBox(frame, x - 0.38f, y - 0.38f, 0.76f, 0.76f, z, z + 1.7f, color, P, wireOnly ? 0.22f : 0.38f);
+        DrawFacing(frame, x, y, z, yaw, 1.8f, color, P, wireOnly ? 0.45f : 0.7f);
+        P(x, y, z + 2.35f, out var tx, out var ty);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "text",
+            Pts = new[] { tx, ty },
+            Fill = color,
+            Text = label,
+            Size = 11
+        });
     }
 
     static void MaybeShadow(RenderFrame frame, float x, float y, float z, float r,
@@ -109,10 +205,35 @@ public static class SceneComposer
         DrawSlab(frame, b.X, b.Y, b.Width, b.Depth, 0, 0, "#1b1412", "#3d2a24", P);
     }
 
-    static void DrawBuilding(RenderFrame frame, Obstacle o, ProjectFn P)
+    static void DrawBuilding(RenderFrame frame, Obstacle o, float playerSx, float playerSy,
+        float playerX, float playerY, ProjectFn P)
     {
         var top = Shade(o.ZMax);
-        DrawBox(frame, o.X, o.Y, o.Width, o.Depth, o.ZMin, o.ZMax, top, P);
+        var target = 1f;
+        if (o.ZMax >= 4f && BuildingOccludesPlayer(o, playerSx, playerSy, playerX, playerY, P))
+            target = 0.25f;
+        if (!BuildingAlpha.TryGetValue(o.Id, out var alpha))
+            alpha = 1f;
+        alpha += (target - alpha) * 0.18f;
+        BuildingAlpha[o.Id] = alpha;
+        DrawBox(frame, o.X, o.Y, o.Width, o.Depth, o.ZMin, o.ZMax, top, P, alpha);
+    }
+
+    static bool BuildingOccludesPlayer(Obstacle o, float psx, float psy, float px, float py, ProjectFn P)
+    {
+        var inFront = o.X + o.Width * 0.5f + o.Y + o.Depth * 0.5f >= px + py - 1.5f;
+        P(o.X, o.Y, o.ZMax, out var a0, out var a1);
+        P(o.X + o.Width, o.Y, o.ZMax, out var b0, out var b1);
+        P(o.X + o.Width, o.Y + o.Depth, o.ZMax, out var c0, out var c1);
+        P(o.X, o.Y + o.Depth, o.ZMax, out var d0, out var d1);
+        P(o.X, o.Y, o.ZMin, out var e0, out var e1);
+        P(o.X + o.Width, o.Y + o.Depth, o.ZMin, out var f0, out var f1);
+        var minX = Math.Min(Math.Min(a0, b0), Math.Min(Math.Min(c0, d0), Math.Min(e0, f0)));
+        var maxX = Math.Max(Math.Max(a0, b0), Math.Max(Math.Max(c0, d0), Math.Max(e0, f0)));
+        var minY = Math.Min(Math.Min(a1, b1), Math.Min(Math.Min(c1, d1), Math.Min(e1, f1)));
+        var maxY = Math.Max(Math.Max(a1, b1), Math.Max(Math.Max(c1, d1), Math.Max(e1, f1)));
+        var overlaps = psx >= minX - 8 && psx <= maxX + 8 && psy >= minY - 8 && psy <= maxY + 8;
+        return overlaps && inFront;
     }
 
     static string Shade(float zMax) => zMax >= 12 ? "#6a3a44" : zMax >= 6 ? "#8a4d3c" : "#a36a4e";
@@ -129,13 +250,14 @@ public static class SceneComposer
             Kind = "poly",
             Pts = new[] { a0, a1, b0, b1, c0, c1, d0, d1 },
             Fill = fill,
-            Stroke = stroke
+            Stroke = stroke,
+            Alpha = 1f
         });
         _ = z0;
     }
 
     static void DrawBox(RenderFrame frame, float x, float y, float w, float d, float z0, float z1,
-        string top, ProjectFn P)
+        string top, ProjectFn P, float alpha = 1f)
     {
         P(x, y, z0, out var bl0, out var bl1);
         P(x + w, y, z0, out var br0, out var br1);
@@ -150,20 +272,23 @@ public static class SceneComposer
         {
             Kind = "poly",
             Pts = new[] { fl0, fl1, fr0, fr1, tfr0, tfr1, tfl0, tfl1 },
-            Fill = Darken(top, 0.72f)
+            Fill = Darken(top, 0.72f),
+            Alpha = alpha
         });
         frame.Ops.Add(new DrawOp
         {
             Kind = "poly",
             Pts = new[] { br0, br1, fr0, fr1, tfr0, tfr1, tbr0, tbr1 },
-            Fill = Darken(top, 0.85f)
+            Fill = Darken(top, 0.85f),
+            Alpha = alpha
         });
         frame.Ops.Add(new DrawOp
         {
             Kind = "poly",
             Pts = new[] { tbl0, tbl1, tbr0, tbr1, tfr0, tfr1, tfl0, tfl1 },
             Fill = top,
-            Stroke = "rgba(0,0,0,0.35)"
+            Stroke = "rgba(0,0,0,0.35)",
+            Alpha = alpha
         });
         _ = (bl0, bl1);
     }
@@ -174,7 +299,8 @@ public static class SceneComposer
         DrawBox(frame, x - w * 0.5f, y - d * 0.5f, w, d, z, z + h, color, P);
     }
 
-    static void DrawFacing(RenderFrame frame, float x, float y, float z, float yaw, float length, string color, ProjectFn P)
+    static void DrawFacing(RenderFrame frame, float x, float y, float z, float yaw, float length, string color, ProjectFn P,
+        float alpha = 1f)
     {
         var tipX = x + MathF.Cos(yaw) * length;
         var tipY = y + MathF.Sin(yaw) * length;
@@ -192,7 +318,8 @@ public static class SceneComposer
             Kind = "poly",
             Pts = new[] { t0, t1, l0, l1, r0, r1 },
             Fill = color,
-            Stroke = "#111"
+            Stroke = "#111",
+            Alpha = alpha
         });
     }
 

@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v1
+// Protocol scarlet.city v2
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,9 @@ public sealed class PlayerState
 {
     [JsonPropertyName("id")]
     public Guid Id { get; set; }
+
+    [JsonPropertyName("player_id")]
+    public Guid PlayerId { get; set; }
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -28,6 +31,15 @@ public sealed class PlayerState
     [JsonPropertyName("yaw")]
     public float Yaw { get; set; }
 
+    [JsonPropertyName("vx")]
+    public float Vx { get; set; }
+
+    [JsonPropertyName("vy")]
+    public float Vy { get; set; }
+
+    [JsonPropertyName("vz")]
+    public float Vz { get; set; }
+
     [JsonPropertyName("health")]
     public float Health { get; set; }
 
@@ -39,6 +51,9 @@ public sealed class PlayerState
 
     [JsonPropertyName("extract_progress")]
     public float ExtractProgress { get; set; }
+
+    [JsonPropertyName("last_processed_input_seq")]
+    public uint LastProcessedInputSeq { get; set; }
 
 }
 

@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v1
+// Protocol scarlet.city v2
 
 using System;
 using System.Collections.Generic;

@@ -1,6 +1,10 @@
 target/
 bin/
 obj/
+server/game.db
+server/game.db-*
+/game.db
+/game.db-*
 .vs/
 *.user
 .DS_Store

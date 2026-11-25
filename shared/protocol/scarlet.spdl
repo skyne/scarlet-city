@@ -8,7 +8,7 @@
 #   - enums: strings matching variant names
 #   - unions: internally tagged objects, discriminator field "type"
 
-protocol scarlet.city version 1
+protocol scarlet.city version 2
 json tagged "type"
 
 # --- primitives mapped by codegen: f32 f64 u8 u16 u32 u64 i32 i64 bool string uuid ---
@@ -107,17 +107,30 @@ struct MapData {
   exfil_zones: ExfilZone[]
 }
 
+struct StashItem {
+  id: uuid
+  item_type: string
+  item_name: string
+  quantity: u32
+  stats_json: string
+}
+
 struct PlayerState {
   id: uuid
+  player_id: uuid
   name: string
   x: f32
   y: f32
   z: f32
   yaw: f32
+  vx: f32
+  vy: f32
+  vz: f32
   health: f32
   vehicle_id: uuid?
   extracting: bool
   extract_progress: f32
+  last_processed_input_seq: u32
 }
 
 struct VehicleState {
@@ -140,6 +153,14 @@ struct LootNode {
   taken: bool
 }
 
+struct DeathCrate {
+  id: uuid
+  x: f32
+  y: f32
+  z: f32
+  items: StashItem[]
+}
+
 struct Projectile {
   id: uuid
   x: f32
@@ -155,8 +176,14 @@ union ClientMessage {
   Join {
     name: string
   }
+  GetProfile {
+  }
+  Deploy {
+    loadout_item_ids: uuid[]
+  }
   Input {
     seq: u32
+    dt: f32
     move_x: f32
     move_y: f32
     ascend_descend: f32
@@ -173,15 +200,31 @@ union ClientMessage {
 union ServerMessage {
   Welcome {
     player_id: uuid
+    actor_id: uuid?
     map: MapData
+  }
+  ProfileState {
+    cash: i32
+    stash: StashItem[]
+    deployed_loadout: StashItem[]
+    actor_id: uuid?
   }
   Snapshot {
     tick: u64
+    last_processed_input_seq: u32
     players: PlayerState[]
     vehicles: VehicleState[]
     loot_nodes: LootNode[]
+    death_crates: DeathCrate[]
     exfil_zones: ExfilZone[]
     projectiles: Projectile[]
+  }
+  RaidEnded {
+    outcome: string
+    cash: i32
+    cash_delta: i32
+    items_banked: StashItem[]
+    message: string
   }
   Event {
     kind: string

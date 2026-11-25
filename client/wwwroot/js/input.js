@@ -3,6 +3,7 @@ window.ScarletInput = {
   pointer: { x: 0, y: 0, down: false },
   interact: false,
   debugToggle: false,
+  profileToggle: false,
   attached: false,
   attach() {
     if (this.attached) return;
@@ -12,9 +13,13 @@ window.ScarletInput = {
         this.debugToggle = true;
         e.preventDefault();
       }
+      if (e.code === "F4" && !this.keys.F4) {
+        this.profileToggle = true;
+        e.preventDefault();
+      }
       this.keys[e.code] = true;
       if (e.code === "KeyE") this.interact = true;
-      if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "F3"].includes(e.code)) e.preventDefault();
+      if (["Space", "KeyW", "KeyA", "KeyS", "KeyD", "F3", "F4"].includes(e.code)) e.preventDefault();
     });
     window.addEventListener("keyup", (e) => {
       this.keys[e.code] = false;
@@ -35,6 +40,8 @@ window.ScarletInput = {
     this.interact = false;
     const toggleDebug = this.debugToggle;
     this.debugToggle = false;
+    const toggleProfile = this.profileToggle;
+    this.profileToggle = false;
     const canvas = document.getElementById("game-canvas");
     return {
       moveX,
@@ -46,6 +53,7 @@ window.ScarletInput = {
       interact,
       brake: !!k.ShiftLeft || !!k.ShiftRight,
       toggleDebug,
+      toggleProfile,
       canvasWidth: canvas ? canvas.width : 0,
       canvasHeight: canvas ? canvas.height : 0
     };

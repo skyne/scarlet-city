@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v1
+// Protocol scarlet.city v2
 
 #![allow(dead_code)]
 
@@ -112,17 +112,31 @@ pub struct MapData {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StashItem {
+    pub id: uuid::Uuid,
+    pub item_type: String,
+    pub item_name: String,
+    pub quantity: u32,
+    pub stats_json: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerState {
     pub id: uuid::Uuid,
+    pub player_id: uuid::Uuid,
     pub name: String,
     pub x: f32,
     pub y: f32,
     pub z: f32,
     pub yaw: f32,
+    pub vx: f32,
+    pub vy: f32,
+    pub vz: f32,
     pub health: f32,
     pub vehicle_id: Option<uuid::Uuid>,
     pub extracting: bool,
     pub extract_progress: f32,
+    pub last_processed_input_seq: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -148,6 +162,15 @@ pub struct LootNode {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeathCrate {
+    pub id: uuid::Uuid,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub items: Vec<StashItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Projectile {
     pub id: uuid::Uuid,
     pub x: f32,
@@ -165,8 +188,13 @@ pub enum ClientMessage {
     Join {
         name: String,
     },
+    GetProfile,
+    Deploy {
+        loadout_item_ids: Vec<uuid::Uuid>,
+    },
     Input {
         seq: u32,
+        dt: f32,
         move_x: f32,
         move_y: f32,
         ascend_descend: f32,
@@ -185,15 +213,31 @@ pub enum ClientMessage {
 pub enum ServerMessage {
     Welcome {
         player_id: uuid::Uuid,
+        actor_id: Option<uuid::Uuid>,
         map: MapData,
+    },
+    ProfileState {
+        cash: i32,
+        stash: Vec<StashItem>,
+        deployed_loadout: Vec<StashItem>,
+        actor_id: Option<uuid::Uuid>,
     },
     Snapshot {
         tick: u64,
+        last_processed_input_seq: u32,
         players: Vec<PlayerState>,
         vehicles: Vec<VehicleState>,
         loot_nodes: Vec<LootNode>,
+        death_crates: Vec<DeathCrate>,
         exfil_zones: Vec<ExfilZone>,
         projectiles: Vec<Projectile>,
+    },
+    RaidEnded {
+        outcome: String,
+        cash: i32,
+        cash_delta: i32,
+        items_banked: Vec<StashItem>,
+        message: String,
     },
     Event {
         kind: String,
