@@ -7,8 +7,8 @@ use crate::collision::{
     segment_obstacle_t, sightline_blocked,
 };
 use crate::protocol::{
-    DeathCrate, ExfilZone, HitKind, Impact, LootNode, LootTier, MapData, PlayerState, Projectile,
-    ServerMessage, StashItem, VehicleKind, VehicleState,
+    CrewMember, DeathCrate, ExfilZone, HitKind, Impact, LootNode, LootTier, MapData, OrderType,
+    PlayerState, Projectile, ServerMessage, StashItem, VehicleKind, VehicleState,
 };
 
 pub const TICK_HZ: u32 = 20;
@@ -40,6 +40,9 @@ const INTERACT_Z: f32 = 2.0;
 const BACKPACK_SLOTS: usize = 8;
 const BACKPACK_MAX_WEIGHT: f32 = 12.0;
 const DEATH_CRATE_TTL_SECS: f32 = 90.0;
+const LOOT_RESPAWN_COMMON_SECS: f32 = 45.0;
+const LOOT_RESPAWN_RARE_SECS: f32 = 90.0;
+const LOOT_RESPAWN_EPIC_SECS: f32 = 180.0;
 const CAR_HP: f32 = 80.0;
 const HOVER_HP: f32 = 60.0;
 const FRIENDLY_FIRE: bool = false;
@@ -59,19 +62,54 @@ pub struct InputState {
 }
 
 /// Session identity is `player_id`. The body in the raid is `controlled_actor_id`.
-/// Milestone 3 can swap the controlled actor without changing the player session.
+/// `squad_id` is the shared crew (1–4 actors) this session is deployed with.
 pub struct Squad {
     #[allow(dead_code)]
     pub player_id: Uuid,
+    pub squad_id: Option<Uuid>,
     pub controlled_actor_id: Option<Uuid>,
+    #[allow(dead_code)]
     pub name: String,
     pub profile_id: i64,
+}
+
+#[derive(Clone, Debug)]
+pub struct CrewSpawn {
+    pub specialist_id: Uuid,
+    pub name: String,
+    pub role: String,
+    pub max_hp: f32,
+}
+
+#[derive(Clone, Debug)]
+enum Order {
+    Follow,
+    Hold { x: f32, y: f32, z: f32 },
+    MoveOrDriveTo { x: f32, y: f32, z: f32 },
+    Engage { x: f32, y: f32, z: f32 },
+}
+
+impl Order {
+    fn point(&self) -> Option<(f32, f32, f32)> {
+        match *self {
+            Order::Follow => None,
+            Order::Hold { x, y, z }
+            | Order::MoveOrDriveTo { x, y, z }
+            | Order::Engage { x, y, z } => Some((x, y, z)),
+        }
+    }
 }
 
 struct Actor {
     id: Uuid,
     player_id: Uuid,
+    squad_id: Uuid,
+    #[allow(dead_code)]
+    specialist_id: Uuid,
     name: String,
+    role: String,
+    max_hp: f32,
+    order: Order,
     x: f32,
     y: f32,
     z: f32,
@@ -128,13 +166,19 @@ pub struct RaidEvent {
     pub message: String,
 }
 
+struct TrackedLoot {
+    node: LootNode,
+    respawn_at: Option<u64>,
+}
+
 pub struct World {
     pub map: MapData,
     tick: u64,
     squads: HashMap<Uuid, Squad>,
+    crews: HashMap<Uuid, Vec<Uuid>>,
     actors: HashMap<Uuid, Actor>,
     vehicles: HashMap<Uuid, Vehicle>,
-    loot: Vec<LootNode>,
+    loot: Vec<TrackedLoot>,
     death_crates: Vec<TrackedCrate>,
     shots: Vec<FlyingShot>,
     impacts: Vec<Impact>,
@@ -146,13 +190,17 @@ impl World {
         let loot = map
             .loot_zones
             .iter()
-            .map(|z| LootNode {
-                id: Uuid::new_v4(),
-                x: z.x + z.width * 0.5,
-                y: z.y + z.depth * 0.5,
-                z: z.z_min,
-                tier: z.tier,
-                taken: false,
+            .map(|z| TrackedLoot {
+                node: LootNode {
+                    id: Uuid::new_v4(),
+                    x: z.x + z.width * 0.5,
+                    y: z.y + z.depth * 0.5,
+                    z: z.z_min,
+                    tier: z.tier,
+                    taken: false,
+                    respawn_secs: 0.0,
+                },
+                respawn_at: None,
             })
             .collect();
         let vehicles = map
@@ -180,6 +228,7 @@ impl World {
             map,
             tick: 0,
             squads: HashMap::new(),
+            crews: HashMap::new(),
             actors: HashMap::new(),
             vehicles,
             loot,
@@ -196,6 +245,7 @@ impl World {
             player_id,
             Squad {
                 player_id,
+                squad_id: None,
                 controlled_actor_id: None,
                 name,
                 profile_id,
@@ -222,54 +272,252 @@ impl World {
     }
 
     pub fn remove_session(&mut self, player_id: Uuid) {
-        if let Some(squad) = self.squads.remove(&player_id) {
-            if let Some(aid) = squad.controlled_actor_id {
-                self.drop_actor(aid, true);
+        let Some(session) = self.squads.remove(&player_id) else {
+            return;
+        };
+        let squad_id = session.squad_id;
+        let owned: Vec<Uuid> = self
+            .actors
+            .values()
+            .filter(|a| a.player_id == player_id)
+            .map(|a| a.id)
+            .collect();
+        for id in owned {
+            if let Some(sid) = self.actors.get(&id).map(|a| a.squad_id) {
+                self.crew_remove(sid, id);
             }
+            self.drop_actor(id, true);
+        }
+        if let Some(sid) = squad_id {
+            self.prune_crew(sid);
         }
     }
 
+    #[allow(dead_code)]
     pub fn deploy(&mut self, player_id: Uuid, loadout: Vec<StashItem>) -> Result<Uuid, String> {
-        let squad = self
+        self.deploy_crew(
+            player_id,
+            loadout,
+            vec![CrewSpawn {
+                specialist_id: Uuid::new_v4(),
+                name: "Operative".into(),
+                role: "Point".into(),
+                max_hp: 100.0,
+            }],
+            None,
+        )
+    }
+
+    /// Spawn 1–4 crew bodies. `join_squad` attaches them to an existing co-op squad.
+    /// The first specialist is controlled by `player_id`; the rest start on Follow.
+    pub fn deploy_crew(
+        &mut self,
+        player_id: Uuid,
+        loadout: Vec<StashItem>,
+        crew: Vec<CrewSpawn>,
+        join_squad: Option<Uuid>,
+    ) -> Result<Uuid, String> {
+        if crew.is_empty() || crew.len() > 4 {
+            return Err("select 1 to 4 crew".into());
+        }
+        let session = self
             .squads
             .get(&player_id)
             .ok_or_else(|| "unknown player".to_string())?;
-        if squad.controlled_actor_id.is_some() {
+        if session.controlled_actor_id.is_some() || session.squad_id.is_some() {
             return Err("already in raid".into());
         }
-        let name = squad.name.clone();
-        let actor_id = Uuid::new_v4();
-        let spawn_x = self.map.bounds.x + self.map.bounds.width * 0.5;
-        let spawn_y = self.map.bounds.y + self.map.bounds.depth * 0.5 + 6.0;
-        self.actors.insert(
-            actor_id,
-            Actor {
-                id: actor_id,
-                player_id,
-                name,
-                x: spawn_x,
-                y: spawn_y,
-                z: self.map.ground_z,
-                yaw: 0.0,
-                vx: 0.0,
-                vy: 0.0,
-                vz: 0.0,
-                health: 100.0,
-                armor: armor_from_items(&loadout),
-                vehicle_id: None,
-                extract_time: 0.0,
-                input: InputState::default(),
-                pending_inputs: VecDeque::new(),
-                shoot_cd: 0.0,
-                interact_edge: false,
-                last_seq: 0,
-                backpack: loadout,
-            },
-        );
-        if let Some(squad) = self.squads.get_mut(&player_id) {
-            squad.controlled_actor_id = Some(actor_id);
+        let squad_id = if let Some(id) = join_squad {
+            let existing = self.crews.get(&id).map(|c| c.len()).unwrap_or(0);
+            if existing == 0 {
+                return Err("unknown squad".into());
+            }
+            if existing + crew.len() > 4 {
+                return Err("that squad only has room for fewer crew".into());
+            }
+            id
+        } else {
+            let id = Uuid::new_v4();
+            self.crews.insert(id, Vec::new());
+            id
+        };
+
+        let (ax, ay, _az) = self.spawn_anchor(squad_id);
+        let mut first = None;
+        for (i, member) in crew.iter().enumerate() {
+            let actor_id = Uuid::new_v4();
+            let ang = i as f32 * std::f32::consts::TAU / 4.0;
+            let ring = if crew.len() == 1 { 0.0 } else { 1.7 };
+            let mut pack = if i == 0 { loadout.clone() } else { Vec::new() };
+            if !pack
+                .iter()
+                .any(|it| it.item_type.eq_ignore_ascii_case("weapon"))
+            {
+                pack.insert(0, issued_sidearm());
+            }
+            let order = if i == 0 {
+                Order::Hold {
+                    x: ax,
+                    y: ay,
+                    z: self.map.ground_z,
+                }
+            } else {
+                Order::Follow
+            };
+            self.actors.insert(
+                actor_id,
+                Actor {
+                    id: actor_id,
+                    player_id,
+                    squad_id,
+                    specialist_id: member.specialist_id,
+                    name: member.name.clone(),
+                    role: member.role.clone(),
+                    max_hp: member.max_hp.max(1.0),
+                    order,
+                    x: ax + ang.cos() * ring,
+                    y: ay + ang.sin() * ring,
+                    z: self.map.ground_z,
+                    yaw: 0.0,
+                    vx: 0.0,
+                    vy: 0.0,
+                    vz: 0.0,
+                    health: member.max_hp.max(1.0),
+                    armor: if i == 0 {
+                        armor_from_items(&pack)
+                    } else {
+                        0.0
+                    },
+                    vehicle_id: None,
+                    extract_time: 0.0,
+                    input: InputState::default(),
+                    pending_inputs: VecDeque::new(),
+                    shoot_cd: 0.0,
+                    interact_edge: false,
+                    last_seq: 0,
+                    backpack: pack,
+                },
+            );
+            self.crews.entry(squad_id).or_default().push(actor_id);
+            if first.is_none() {
+                first = Some(actor_id);
+            }
+        }
+        let actor_id = first.ok_or_else(|| "empty crew".to_string())?;
+        if let Some(session) = self.squads.get_mut(&player_id) {
+            session.squad_id = Some(squad_id);
+            session.controlled_actor_id = Some(actor_id);
         }
         Ok(actor_id)
+    }
+
+    pub fn swap_actor(&mut self, player_id: Uuid, target: Uuid) -> Result<(), String> {
+        let session = self
+            .squads
+            .get(&player_id)
+            .ok_or_else(|| "unknown player".to_string())?;
+        let squad_id = session.squad_id.ok_or_else(|| "not in a squad".to_string())?;
+        if session.controlled_actor_id == Some(target) {
+            return Ok(());
+        }
+        let actor = self
+            .actors
+            .get(&target)
+            .ok_or_else(|| "unknown actor".to_string())?;
+        if actor.squad_id != squad_id {
+            return Err("not in your squad".into());
+        }
+        if actor.health <= 0.0 {
+            return Err("that crewmate is down".into());
+        }
+        if let Some(other) = self.controller_of(target) {
+            if other != player_id {
+                return Err("already controlled".into());
+            }
+        }
+        let prev = session.controlled_actor_id;
+        if let Some(prev_id) = prev {
+            if let Some(body) = self.actors.get_mut(&prev_id) {
+                body.order = if body.vehicle_id.is_some() {
+                    Order::MoveOrDriveTo {
+                        x: body.x,
+                        y: body.y,
+                        z: body.z,
+                    }
+                } else {
+                    Order::Hold {
+                        x: body.x,
+                        y: body.y,
+                        z: body.z,
+                    }
+                };
+                body.pending_inputs.clear();
+                body.input.move_x = 0.0;
+                body.input.move_y = 0.0;
+                body.input.shoot = false;
+                body.input.interact = false;
+            }
+        }
+        if let Some(body) = self.actors.get_mut(&target) {
+            body.pending_inputs.clear();
+            body.input.shoot = false;
+        }
+        if let Some(session) = self.squads.get_mut(&player_id) {
+            session.controlled_actor_id = Some(target);
+        }
+        Ok(())
+    }
+
+    pub fn squad_order(
+        &mut self,
+        player_id: Uuid,
+        kind: OrderType,
+        target: Option<Uuid>,
+        x: f32,
+        y: f32,
+        z: f32,
+    ) -> Result<(), String> {
+        let session = self
+            .squads
+            .get(&player_id)
+            .ok_or_else(|| "unknown player".to_string())?;
+        let squad_id = session.squad_id.ok_or_else(|| "not in a squad".to_string())?;
+        let order = match kind {
+            OrderType::Follow => Order::Follow,
+            OrderType::Hold => Order::Hold { x, y, z },
+            OrderType::MoveOrDriveTo => Order::MoveOrDriveTo { x, y, z },
+            OrderType::Engage => Order::Engage { x, y, z },
+        };
+        let ids: Vec<Uuid> = if let Some(tid) = target {
+            let actor = self
+                .actors
+                .get(&tid)
+                .ok_or_else(|| "unknown actor".to_string())?;
+            if actor.squad_id != squad_id {
+                return Err("not in your squad".into());
+            }
+            if actor.health <= 0.0 {
+                return Err("that crewmate is down".into());
+            }
+            if self.is_human_controlled(tid) {
+                return Err("that crewmate is player-controlled".into());
+            }
+            vec![tid]
+        } else {
+            self.crews
+                .get(&squad_id)
+                .cloned()
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|id| !self.is_human_controlled(*id))
+                .collect()
+        };
+        for id in ids {
+            if let Some(actor) = self.actors.get_mut(&id) {
+                actor.order = order.clone();
+            }
+        }
+        Ok(())
     }
 
     pub fn set_input(&mut self, player_id: Uuid, input: InputState) {
@@ -290,12 +538,25 @@ impl World {
     pub fn tick(&mut self) {
         self.tick += 1;
         self.impacts.clear();
+        self.tick_loot();
         self.tick_crates();
         let ids: Vec<Uuid> = self.actors.keys().copied().collect();
         for id in ids {
             self.tick_actor(id);
         }
         self.tick_projectiles();
+    }
+
+    fn tick_loot(&mut self) {
+        for node in &mut self.loot {
+            let Some(at) = node.respawn_at else {
+                continue;
+            };
+            if node.node.taken && self.tick >= at {
+                node.node.taken = false;
+                node.respawn_at = None;
+            }
+        }
     }
 
     fn tick_crates(&mut self) {
@@ -311,6 +572,11 @@ impl World {
     }
 
     fn tick_actor(&mut self, id: Uuid) {
+        if !self.is_human_controlled(id) {
+            let input = self.bot_think(id);
+            self.apply_input_step(id, input);
+            return;
+        }
         let Some(actor) = self.actors.get_mut(&id) else {
             return;
         };
@@ -494,10 +760,10 @@ impl World {
 
         let mut best: Option<(f32, LootPick)> = None;
         for (idx, node) in self.loot.iter().enumerate() {
-            if node.taken {
+            if node.node.taken {
                 continue;
             }
-            if let Some(dist) = interact_dist(px, py, pz, node.x, node.y, node.z) {
+            if let Some(dist) = interact_dist(px, py, pz, node.node.x, node.node.y, node.node.z) {
                 if best.as_ref().map(|(d, _)| dist < *d).unwrap_or(true) {
                     best = Some((dist, LootPick::Node(idx)));
                 }
@@ -565,10 +831,10 @@ impl World {
                 let Some(node) = self.loot.get(idx) else {
                     return;
                 };
-                if node.taken {
+                if node.node.taken {
                     return;
                 }
-                loot_to_item(node.tier)
+                loot_to_item(node.node.tier)
             }
         };
         let Some(p) = self.actors.get(&id) else {
@@ -595,7 +861,9 @@ impl World {
             }
             LootPick::Node(idx) => {
                 if let Some(node) = self.loot.get_mut(idx) {
-                    node.taken = true;
+                    node.node.taken = true;
+                    node.respawn_at =
+                        Some(self.tick.saturating_add(loot_respawn_ticks(node.node.tier)));
                 }
             }
         }
@@ -610,6 +878,12 @@ impl World {
     }
 
     fn update_extraction(&mut self, id: Uuid, dt: f32) {
+        if !self.is_human_controlled(id) {
+            if let Some(p) = self.actors.get_mut(&id) {
+                p.extract_time = 0.0;
+            }
+            return;
+        }
         let Some(p) = self.actors.get(&id) else {
             return;
         };
@@ -645,8 +919,20 @@ impl World {
         let Some(actor) = self.actors.get(&actor_id) else {
             return;
         };
-        let player_id = actor.player_id;
-        let items = actor.backpack.clone();
+        let player_id = self.controller_of(actor_id).unwrap_or(actor.player_id);
+        let squad_id = actor.squad_id;
+        let owned: Vec<Uuid> = self
+            .actors
+            .values()
+            .filter(|a| a.player_id == player_id && a.squad_id == squad_id)
+            .map(|a| a.id)
+            .collect();
+        let mut items = Vec::new();
+        for id in &owned {
+            if let Some(body) = self.actors.get(id) {
+                items.extend(body.backpack.iter().filter(|i| !is_issued(i)).cloned());
+            }
+        }
         let cash_delta: i32 = items.iter().map(crate::db::loot_cash_value).sum();
         self.events.push(RaidEvent {
             player_id,
@@ -655,10 +941,15 @@ impl World {
             cash_delta,
             message: "You extracted. Gear is in the stash.".into(),
         });
-        self.drop_actor(actor_id, false);
-        if let Some(squad) = self.squads.get_mut(&player_id) {
-            squad.controlled_actor_id = None;
+        for id in owned {
+            self.crew_remove(squad_id, id);
+            self.drop_actor(id, false);
         }
+        if let Some(session) = self.squads.get_mut(&player_id) {
+            session.controlled_actor_id = None;
+            session.squad_id = None;
+        }
+        self.prune_crew(squad_id);
     }
 
     fn drop_actor(&mut self, actor_id: Uuid, as_crate: bool) {
@@ -729,10 +1020,10 @@ impl World {
             target: Option<Uuid>,
         }
 
-        let actors: Vec<(Uuid, Uuid, f32, f32, f32, Option<Uuid>)> = self
+        let actors: Vec<(Uuid, Uuid, Uuid, f32, f32, f32, Option<Uuid>)> = self
             .actors
             .values()
-            .map(|a| (a.id, a.player_id, a.x, a.y, a.z, a.vehicle_id))
+            .map(|a| (a.id, a.player_id, a.squad_id, a.x, a.y, a.z, a.vehicle_id))
             .collect();
         let vehicles: Vec<(Uuid, f32, f32, f32, f32, f32)> = self
             .vehicles
@@ -754,7 +1045,8 @@ impl World {
             let z1 = z0 + shot.proj.vz * DT;
             let owner = shot.proj.owner_id;
             let owner_player = actors.iter().find(|a| a.0 == owner).map(|a| a.1);
-            let owner_vehicle = actors.iter().find(|a| a.0 == owner).and_then(|a| a.5);
+            let owner_squad = actors.iter().find(|a| a.0 == owner).map(|a| a.2);
+            let owner_vehicle = actors.iter().find(|a| a.0 == owner).and_then(|a| a.6);
 
             let mut best_t = f32::MAX;
             let mut best_rank = u8::MAX;
@@ -799,11 +1091,13 @@ impl World {
                     );
                 }
             }
-            for (id, player_id, ax, ay, az, _) in &actors {
+            for (id, player_id, squad_id, ax, ay, az, _) in &actors {
                 if *id == owner {
                     continue;
                 }
-                if !FRIENDLY_FIRE && owner_player == Some(*player_id) {
+                if !FRIENDLY_FIRE
+                    && (owner_player == Some(*player_id) || owner_squad == Some(*squad_id))
+                {
                     continue;
                 }
                 if let Some(t) = segment_cylinder_t(
@@ -947,17 +1241,68 @@ impl World {
         let Some(actor) = self.actors.get(&actor_id) else {
             return;
         };
-        let player_id = actor.player_id;
+        let squad_id = actor.squad_id;
+        let controllers = self.controllers_of(actor_id);
+        self.crew_remove(squad_id, actor_id);
+        self.drop_actor(actor_id, true);
+        for pid in controllers {
+            if let Some(session) = self.squads.get_mut(&pid) {
+                if session.controlled_actor_id == Some(actor_id) {
+                    session.controlled_actor_id = None;
+                }
+            }
+            if let Some(next) = self.claimable(squad_id, pid) {
+                if let Some(session) = self.squads.get_mut(&pid) {
+                    session.controlled_actor_id = Some(next);
+                }
+                if let Some(body) = self.actors.get_mut(&next) {
+                    body.pending_inputs.clear();
+                }
+            }
+        }
+        self.finish_dead_players(squad_id);
+    }
+
+    fn finish_dead_players(&mut self, squad_id: Uuid) {
+        let players: Vec<Uuid> = self
+            .squads
+            .iter()
+            .filter(|(_, s)| s.squad_id == Some(squad_id))
+            .map(|(id, _)| *id)
+            .collect();
+        let living = self.crews.get(&squad_id).map(|c| c.len()).unwrap_or(0);
+        if living == 0 {
+            for pid in players {
+                self.fail_player(pid, "You died. Unextracted gear was dropped.");
+            }
+            self.crews.remove(&squad_id);
+            return;
+        }
+        for pid in players {
+            let controlled = self.squads.get(&pid).and_then(|s| s.controlled_actor_id);
+            if controlled.is_none() && self.claimable(squad_id, pid).is_none() {
+                self.fail_player(pid, "No crew left to control.");
+            }
+        }
+    }
+
+    fn fail_player(&mut self, player_id: Uuid, message: &str) {
+        let Some(session) = self.squads.get(&player_id) else {
+            return;
+        };
+        if session.squad_id.is_none() && session.controlled_actor_id.is_none() {
+            return;
+        }
         self.events.push(RaidEvent {
             player_id,
             outcome: "died".into(),
             items_banked: Vec::new(),
             cash_delta: 0,
-            message: "You died. Unextracted gear was dropped.".into(),
+            message: message.into(),
         });
-        self.drop_actor(actor_id, true);
-        if let Some(squad) = self.squads.get_mut(&player_id) {
-            squad.controlled_actor_id = None;
+        if let Some(session) = self.squads.get_mut(&player_id) {
+            session.controlled_actor_id = None;
+            session.squad_id = None;
         }
     }
 
@@ -1001,18 +1346,15 @@ impl World {
     }
 
     pub fn snapshot_for(&self, observer_player_id: Uuid) -> ServerMessage {
-        let observer_actor = self
-            .squads
-            .get(&observer_player_id)
-            .and_then(|s| s.controlled_actor_id)
-            .and_then(|id| self.actors.get(&id));
+        let session = self.squads.get(&observer_player_id);
+        let squad_id = session.and_then(|s| s.squad_id);
+        let controlled_actor_id = session.and_then(|s| s.controlled_actor_id);
+        let observer_actor = controlled_actor_id.and_then(|id| self.actors.get(&id));
         let last_seq = observer_actor.map(|a| a.last_seq).unwrap_or(0);
-        let squad_actor_ids: Vec<Uuid> = self
-            .squads
-            .get(&observer_player_id)
-            .and_then(|s| s.controlled_actor_id)
-            .into_iter()
-            .collect();
+        let squad_actor_ids: Vec<Uuid> = squad_id
+            .and_then(|id| self.crews.get(&id))
+            .cloned()
+            .unwrap_or_default();
 
         let (ox, oy, oz) = observer_actor
             .map(|a| (a.x, a.y, a.z))
@@ -1041,11 +1383,16 @@ impl World {
         ServerMessage::Snapshot {
             tick: self.tick,
             last_processed_input_seq: last_seq,
+            squad_id,
+            controlled_actor_id,
+            crew: squad_id
+                .map(|id| self.crew_members(id))
+                .unwrap_or_default(),
             players: self
                 .actors
                 .values()
                 .filter(|a| visible_actor(a))
-                .map(|p| self.actor_state(p, squad_actor_ids.contains(&p.id)))
+                .map(|p| self.actor_state(p, p.id == controlled_actor_id.unwrap_or_default()))
                 .collect(),
             vehicles: self
                 .vehicles
@@ -1072,8 +1419,16 @@ impl World {
             loot_nodes: self
                 .loot
                 .iter()
-                .filter(|n| !n.taken && visible_point(n.x, n.y, n.z))
-                .cloned()
+                .filter(|n| n.node.taken || visible_point(n.node.x, n.node.y, n.node.z))
+                .map(|n| {
+                    let mut node = n.node.clone();
+                    node.respawn_secs = n
+                        .respawn_at
+                        .filter(|_| node.taken)
+                        .map(|at| at.saturating_sub(self.tick) as f32 * DT)
+                        .unwrap_or(0.0);
+                    node
+                })
                 .collect(),
             death_crates: self
                 .death_crates
@@ -1109,7 +1464,10 @@ impl World {
         PlayerState {
             id: p.id,
             player_id: p.player_id,
+            squad_id: p.squad_id,
             name: p.name.clone(),
+            role: p.role.clone(),
+            is_ai: !self.is_human_controlled(p.id),
             x: p.x,
             y: p.y,
             z: p.z,
@@ -1130,6 +1488,487 @@ impl World {
             last_processed_input_seq: p.last_seq,
         }
     }
+
+    fn crew_members(&self, squad_id: Uuid) -> Vec<CrewMember> {
+        let Some(ids) = self.crews.get(&squad_id) else {
+            return Vec::new();
+        };
+        ids.iter()
+            .filter_map(|id| self.actors.get(id))
+            .map(|a| {
+                let human = self.is_human_controlled(a.id);
+                let (ox, oy, oz) = a.order.point().unwrap_or((0.0, 0.0, 0.0));
+                CrewMember {
+                    actor_id: a.id,
+                    name: a.name.clone(),
+                    role: a.role.clone(),
+                    hp: a.health,
+                    max_hp: a.max_hp,
+                    is_ai: !human,
+                    order_label: order_label(a, human),
+                    order_x: ox,
+                    order_y: oy,
+                    order_z: oz,
+                }
+            })
+            .collect()
+    }
+
+    fn controller_of(&self, actor_id: Uuid) -> Option<Uuid> {
+        self.squads.iter().find_map(|(pid, s)| {
+            if s.controlled_actor_id == Some(actor_id) {
+                Some(*pid)
+            } else {
+                None
+            }
+        })
+    }
+
+    fn controllers_of(&self, actor_id: Uuid) -> Vec<Uuid> {
+        self.controller_of(actor_id).into_iter().collect()
+    }
+
+    fn is_human_controlled(&self, actor_id: Uuid) -> bool {
+        self.controller_of(actor_id).is_some()
+    }
+
+    fn claimable(&self, squad_id: Uuid, player_id: Uuid) -> Option<Uuid> {
+        let ids = self.crews.get(&squad_id)?;
+        let mut fallback = None;
+        for id in ids {
+            let Some(actor) = self.actors.get(id) else {
+                continue;
+            };
+            if actor.health <= 0.0 {
+                continue;
+            }
+            if let Some(other) = self.controller_of(*id) {
+                if other != player_id {
+                    continue;
+                }
+            }
+            if actor.player_id == player_id {
+                return Some(*id);
+            }
+            if fallback.is_none() {
+                fallback = Some(*id);
+            }
+        }
+        fallback
+    }
+
+    fn crew_remove(&mut self, squad_id: Uuid, actor_id: Uuid) {
+        if let Some(ids) = self.crews.get_mut(&squad_id) {
+            ids.retain(|id| *id != actor_id);
+        }
+    }
+
+    fn prune_crew(&mut self, squad_id: Uuid) {
+        let empty = self.crews.get(&squad_id).map(|c| c.is_empty()).unwrap_or(true);
+        if empty {
+            self.crews.remove(&squad_id);
+            let stranded: Vec<Uuid> = self
+                .squads
+                .iter()
+                .filter(|(_, s)| s.squad_id == Some(squad_id))
+                .map(|(id, _)| *id)
+                .collect();
+            for pid in stranded {
+                if let Some(session) = self.squads.get_mut(&pid) {
+                    session.squad_id = None;
+                    session.controlled_actor_id = None;
+                }
+            }
+        }
+    }
+
+    fn spawn_anchor(&self, squad_id: Uuid) -> (f32, f32, f32) {
+        if let Some(ids) = self.crews.get(&squad_id) {
+            let mut n = 0.0_f32;
+            let (mut x, mut y, mut z) = (0.0, 0.0, 0.0);
+            for id in ids {
+                if let Some(a) = self.actors.get(id) {
+                    x += a.x;
+                    y += a.y;
+                    z += a.z;
+                    n += 1.0;
+                }
+            }
+            if n > 0.0 {
+                return (x / n, y / n, z / n);
+            }
+        }
+        (
+            self.map.bounds.x + self.map.bounds.width * 0.5,
+            self.map.bounds.y + self.map.bounds.depth * 0.5 + 6.0,
+            self.map.ground_z,
+        )
+    }
+
+    fn bot_think(&mut self, id: Uuid) -> InputState {
+        let Some(actor) = self.actors.get(&id) else {
+            return InputState::default();
+        };
+        let order = actor.order.clone();
+        let squad_id = actor.squad_id;
+        let owner = actor.player_id;
+        let role = actor.role.clone();
+        let (x, y, yaw) = (actor.x, actor.y, actor.yaw);
+        let in_vehicle = actor.vehicle_id.is_some();
+        let slot = self
+            .crews
+            .get(&squad_id)
+            .and_then(|ids| ids.iter().position(|a| *a == id))
+            .unwrap_or(1);
+
+        let (mut tx, mut ty, mut tz) = match order {
+            Order::Follow => {
+                let lead = self.lead_pose(squad_id, id, owner);
+                let (fx, fy) = follow_point(lead, slot);
+                (fx, fy, lead.2)
+            }
+            Order::Hold { x: hx, y: hy, z: hz }
+            | Order::MoveOrDriveTo { x: hx, y: hy, z: hz }
+            | Order::Engage { x: hx, y: hy, z: hz } => (hx, hy, hz),
+        };
+
+        let mut aim = (ty - y).atan2(tx - x);
+        let mut shoot = false;
+        if let Order::Engage { .. } = order {
+            if let Some(hostile) = self.best_hostile(id, &role) {
+                aim = (hostile.1 - y).atan2(hostile.0 - x);
+                shoot = true;
+                let dist = ((hostile.0 - x).powi(2) + (hostile.1 - y).powi(2)).sqrt();
+                if dist > 8.0 {
+                    tx = hostile.0;
+                    ty = hostile.1;
+                    tz = hostile.2;
+                }
+            }
+        } else if let Order::Hold { .. } = order {
+            let dist = ((tx - x).powi(2) + (ty - y).powi(2)).sqrt();
+            if dist < 0.8 {
+                let lead = self.lead_pose(squad_id, id, owner);
+                if lead_is_other(lead, x, y) {
+                    aim = (lead.1 - y).atan2(lead.0 - x);
+                } else {
+                    aim = yaw;
+                }
+            }
+        }
+
+        let travel_far = matches!(order, Order::MoveOrDriveTo { .. });
+        if in_vehicle || (travel_far && self.should_board(id, tx, ty, tz)) {
+            if !in_vehicle {
+                if let Some((vx, vy)) = self.board_walk_target(id, tx, ty, tz) {
+                    return self.foot_toward(id, vx, vy, (vy - y).atan2(vx - x), false);
+                }
+            }
+            let mut input = self.drive_toward(id, tx, ty, tz);
+            input.aim_angle = aim;
+            input.shoot = shoot && in_vehicle;
+            if self.actors.get(&id).and_then(|a| a.vehicle_id).is_some() {
+                input.shoot = shoot;
+                return input;
+            }
+        }
+
+        let hold_arrived = matches!(order, Order::Hold { .. } | Order::Engage { .. })
+            && ((tx - x).powi(2) + (ty - y).powi(2)).sqrt() < 1.1
+            && !shoot;
+        if hold_arrived && !in_vehicle {
+            return InputState {
+                dt: DT,
+                aim_angle: aim,
+                shoot,
+                ..InputState::default()
+            };
+        }
+        if matches!(order, Order::Engage { .. }) && shoot {
+            let dist_order = ((tx - x).powi(2) + (ty - y).powi(2)).sqrt();
+            if dist_order < 1.1 {
+                return InputState {
+                    dt: DT,
+                    aim_angle: aim,
+                    shoot: true,
+                    ..InputState::default()
+                };
+            }
+        }
+        self.foot_toward(id, tx, ty, aim, shoot)
+    }
+
+    fn should_board(&self, id: Uuid, tx: f32, ty: f32, tz: f32) -> bool {
+        let Some(actor) = self.actors.get(&id) else {
+            return false;
+        };
+        if actor.vehicle_id.is_some() {
+            return false;
+        }
+        let dist = ((tx - actor.x).powi(2) + (ty - actor.y).powi(2)).sqrt();
+        dist > 7.0 || (tz - self.map.ground_z).abs() > 3.0
+    }
+
+    /// Walk-to point for a nearby vehicle, or `None` after boarding (caller drives).
+    fn board_walk_target(&mut self, id: Uuid, _tx: f32, _ty: f32, tz: f32) -> Option<(f32, f32)> {
+        let Some(actor) = self.actors.get(&id) else {
+            return None;
+        };
+        let prefer_hover = tz > self.map.ground_z + 3.0;
+        let (ax, ay, az) = (actor.x, actor.y, actor.z);
+        let vid = nearest_vehicle(&self.vehicles, ax, ay, prefer_hover, 8.0)?;
+        let v = self.vehicles.get(&vid)?;
+        let vd = ((v.x - ax).powi(2) + (v.y - ay).powi(2)).sqrt();
+        let close = vd <= INTERACT_RANGE && (v.z - az).abs() <= INTERACT_Z + 1.5;
+        let (vx, vy) = (v.x, v.y);
+        if close {
+            self.enter_vehicle(id, vid);
+            None
+        } else {
+            Some((vx, vy))
+        }
+    }
+
+    fn enter_vehicle(&mut self, actor_id: Uuid, vid: Uuid) {
+        let Some(v) = self.vehicles.get(&vid) else {
+            return;
+        };
+        if v.driver_id.is_some() || v.hp <= 0.0 {
+            return;
+        }
+        if let Some(v) = self.vehicles.get_mut(&vid) {
+            v.driver_id = Some(actor_id);
+        }
+        if let Some(p) = self.actors.get_mut(&actor_id) {
+            p.vehicle_id = Some(vid);
+        }
+    }
+
+    fn lead_pose(&self, squad_id: Uuid, self_id: Uuid, owner: Uuid) -> (f32, f32, f32, f32) {
+        let pick = |cid: Uuid, actors: &HashMap<Uuid, Actor>| -> Option<(f32, f32, f32, f32)> {
+            if cid == self_id {
+                return None;
+            }
+            actors.get(&cid).map(|a| (a.x, a.y, a.z, a.yaw))
+        };
+        if let Some(session) = self.squads.get(&owner) {
+            if let Some(cid) = session.controlled_actor_id {
+                if let Some(pose) = pick(cid, &self.actors) {
+                    return pose;
+                }
+            }
+        }
+        for session in self.squads.values() {
+            if session.squad_id != Some(squad_id) {
+                continue;
+            }
+            if let Some(cid) = session.controlled_actor_id {
+                if let Some(pose) = pick(cid, &self.actors) {
+                    return pose;
+                }
+            }
+        }
+        self.actors
+            .get(&self_id)
+            .map(|a| (a.x, a.y, a.z, a.yaw))
+            .unwrap_or((0.0, 0.0, 0.0, 0.0))
+    }
+
+    fn best_hostile(&self, id: Uuid, role: &str) -> Option<(f32, f32, f32)> {
+        let me = self.actors.get(&id)?;
+        let range = if role == "Scout" { 28.0 } else { 18.0 };
+        let mut best: Option<(f32, f32, f32, f32)> = None;
+        for other in self.actors.values() {
+            if other.id == id || other.squad_id == me.squad_id || other.health <= 0.0 {
+                continue;
+            }
+            let dx = other.x - me.x;
+            let dy = other.y - me.y;
+            let dist = (dx * dx + dy * dy).sqrt();
+            if dist > range {
+                continue;
+            }
+            if sightline_blocked(me.x, me.y, me.z, other.x, other.y, other.z, &self.map.obstacles)
+            {
+                continue;
+            }
+            if best.map(|(bd, _, _, _)| dist < bd).unwrap_or(true) {
+                best = Some((dist, other.x, other.y, other.z));
+            }
+        }
+        best.map(|(_, x, y, z)| (x, y, z))
+    }
+
+    fn foot_toward(&self, id: Uuid, tx: f32, ty: f32, aim: f32, shoot: bool) -> InputState {
+        let Some(actor) = self.actors.get(&id) else {
+            return InputState::default();
+        };
+        let dist = ((tx - actor.x).powi(2) + (ty - actor.y).powi(2)).sqrt();
+        if dist < 0.7 {
+            return InputState {
+                dt: DT,
+                aim_angle: aim,
+                shoot,
+                ..InputState::default()
+            };
+        }
+        let (mx, my) = self.avoid_dir(actor.x, actor.y, actor.z, tx, ty);
+        InputState {
+            dt: DT,
+            move_x: mx,
+            move_y: my,
+            aim_angle: aim,
+            shoot,
+            ..InputState::default()
+        }
+    }
+
+    fn avoid_dir(&self, x: f32, y: f32, z: f32, tx: f32, ty: f32) -> (f32, f32) {
+        let base = (ty - y).atan2(tx - x);
+        let z1 = z + PLAYER_HEIGHT;
+        for ang in [0.0_f32, 0.55, -0.55, 1.15, -1.15, 2.2, -2.2] {
+            let dir = base + ang;
+            let mx = dir.cos();
+            let my = dir.sin();
+            let nx = x + mx * 1.3;
+            let ny = y + my * 1.3;
+            if !blocked_by_map(nx, ny, PLAYER_RADIUS, z, z1, &self.map.obstacles) {
+                return (mx, my);
+            }
+        }
+        (0.0, 0.0)
+    }
+
+    fn drive_toward(&self, id: Uuid, tx: f32, ty: f32, tz: f32) -> InputState {
+        let Some(actor) = self.actors.get(&id) else {
+            return InputState::default();
+        };
+        let Some(vid) = actor.vehicle_id else {
+            return self.foot_toward(id, tx, ty, (ty - actor.y).atan2(tx - actor.x), false);
+        };
+        let Some(v) = self.vehicles.get(&vid) else {
+            return InputState::default();
+        };
+        let dx = tx - v.x;
+        let dy = ty - v.y;
+        let dist = (dx * dx + dy * dy).sqrt();
+        let desired = dy.atan2(dx);
+        let diff = wrap_angle(desired - v.yaw);
+        let steer = (diff / 0.65).clamp(-1.0, 1.0);
+        let aligned = diff.abs() < 0.75;
+        let mut throttle = if dist < 1.7 {
+            0.0
+        } else if aligned {
+            1.0
+        } else {
+            0.3
+        };
+        let mut brake = dist < 2.4 && v.speed.abs() > 3.0;
+        if dist < 1.5 {
+            throttle = 0.0;
+            brake = v.speed.abs() > 0.35;
+        }
+        let ascend = match v.kind {
+            VehicleKind::HoverCraft => (tz - v.z).clamp(-1.0, 1.0),
+            VehicleKind::GroundCar => 0.0,
+        };
+        InputState {
+            dt: DT,
+            move_x: if dist < 1.2 { 0.0 } else { steer },
+            move_y: throttle,
+            ascend_descend: ascend,
+            aim_angle: desired,
+            brake,
+            ..InputState::default()
+        }
+    }
+}
+
+fn order_label(actor: &Actor, human: bool) -> String {
+    if human {
+        return String::new();
+    }
+    match actor.order {
+        Order::Follow => "Follow".into(),
+        Order::Hold { .. } => "Hold".into(),
+        Order::MoveOrDriveTo { .. } => {
+            if actor.vehicle_id.is_some() {
+                "Drive".into()
+            } else {
+                "Move".into()
+            }
+        }
+        Order::Engage { .. } => "Engage".into(),
+    }
+}
+
+fn issued_sidearm() -> StashItem {
+    StashItem {
+        id: Uuid::new_v4(),
+        item_type: "Weapon".into(),
+        item_name: "Sidearm".into(),
+        quantity: 1,
+        stats_json: r#"{"damage":14,"cash_value":0,"issued":true}"#.into(),
+    }
+}
+
+fn is_issued(item: &StashItem) -> bool {
+    item.stats_json.contains("\"issued\":true")
+}
+
+fn follow_point(lead: (f32, f32, f32, f32), slot: usize) -> (f32, f32) {
+    let (lx, ly, _, yaw) = lead;
+    let back = 2.4 + slot as f32 * 0.35;
+    let side = if slot % 2 == 0 { 1.2 } else { -1.2 };
+    (
+        lx - yaw.cos() * back - yaw.sin() * side,
+        ly - yaw.sin() * back + yaw.cos() * side,
+    )
+}
+
+fn lead_is_other(lead: (f32, f32, f32, f32), x: f32, y: f32) -> bool {
+    let dx = lead.0 - x;
+    let dy = lead.1 - y;
+    dx * dx + dy * dy > 0.4
+}
+
+fn nearest_vehicle(
+    vehicles: &HashMap<Uuid, Vehicle>,
+    x: f32,
+    y: f32,
+    prefer_hover: bool,
+    max_dist: f32,
+) -> Option<Uuid> {
+    let mut best: Option<(f32, Uuid)> = None;
+    for v in vehicles.values() {
+        if v.driver_id.is_some() || v.hp <= 0.0 {
+            continue;
+        }
+        if prefer_hover && v.kind != VehicleKind::HoverCraft {
+            continue;
+        }
+        let d = ((v.x - x).powi(2) + (v.y - y).powi(2)).sqrt();
+        if d > max_dist {
+            continue;
+        }
+        if best.map(|(bd, _)| d < bd).unwrap_or(true) {
+            best = Some((d, v.id));
+        }
+    }
+    if best.is_none() && prefer_hover {
+        return nearest_vehicle(vehicles, x, y, false, max_dist);
+    }
+    best.map(|(_, id)| id)
+}
+
+fn wrap_angle(mut diff: f32) -> f32 {
+    while diff > std::f32::consts::PI {
+        diff -= std::f32::consts::TAU;
+    }
+    while diff < -std::f32::consts::PI {
+        diff += std::f32::consts::TAU;
+    }
+    diff
 }
 
 fn vehicle_size(kind: VehicleKind) -> (f32, f32) {
@@ -1196,6 +2035,15 @@ fn armor_from_items(items: &[StashItem]) -> f32 {
         .fold(0.0, |acc, a| acc + a.max(0.0))
 }
 
+fn loot_respawn_ticks(tier: LootTier) -> u64 {
+    let secs = match tier {
+        LootTier::Common => LOOT_RESPAWN_COMMON_SECS,
+        LootTier::Rare => LOOT_RESPAWN_RARE_SECS,
+        LootTier::Epic => LOOT_RESPAWN_EPIC_SECS,
+    };
+    (secs * TICK_HZ as f32).round() as u64
+}
+
 fn loot_to_item(tier: LootTier) -> StashItem {
     let (name, value) = match tier {
         LootTier::Common => ("Street Cache", 50),
@@ -1225,7 +2073,7 @@ fn lerp_angle(from: f32, to: f32, t: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::protocol::{MapBounds, Obstacle};
+    use crate::protocol::{LootZone, MapBounds, Obstacle};
 
     fn wall_map() -> MapData {
         MapData {
@@ -1513,6 +2361,46 @@ mod tests {
     }
 
     #[test]
+    fn common_loot_returns_after_cooldown_with_nobody_deployed() {
+        let mut map = wall_map();
+        map.loot_zones.push(LootZone {
+            id: "cache".into(),
+            x: 20.0,
+            y: 20.0,
+            width: 2.0,
+            depth: 2.0,
+            z_min: 0.0,
+            z_max: 1.5,
+            tier: LootTier::Common,
+        });
+        let mut world = World::new(map);
+        let node_id = world.loot[0].node.id;
+        let pid = world.register_squad("runner".into(), 1);
+        let id = world.deploy(pid, Vec::new()).unwrap();
+        {
+            let a = world.actors.get_mut(&id).unwrap();
+            a.x = 21.0;
+            a.y = 21.0;
+            a.z = 0.0;
+        }
+        world.try_interact(id);
+        assert!(world.loot[0].node.taken);
+        world.remove_session(pid);
+        assert!(world.actors.is_empty());
+
+        let wait = loot_respawn_ticks(LootTier::Common);
+        for _ in 0..wait - 1 {
+            world.tick();
+        }
+        assert!(world.loot[0].node.taken);
+        assert_eq!(world.loot[0].node.id, node_id);
+        world.tick();
+        assert!(!world.loot[0].node.taken);
+        assert!(world.loot[0].respawn_at.is_none());
+        assert_eq!(world.loot[0].node.id, node_id);
+    }
+
+    #[test]
     fn armor_absorbs_before_health() {
         let mut world = World::new(wall_map());
         let pid = world.register_squad("runner".into(), 1);
@@ -1528,5 +2416,136 @@ mod tests {
         assert!((a.armor - 0.0).abs() < 0.01);
         assert!((a.health - 92.0).abs() < 0.01);
         assert!((weapon_damage(&a.backpack) - 30.0).abs() < 0.01);
+    }
+
+    fn crew(name: &str, role: &str, hp: f32) -> CrewSpawn {
+        CrewSpawn {
+            specialist_id: Uuid::new_v4(),
+            name: name.into(),
+            role: role.into(),
+            max_hp: hp,
+        }
+    }
+
+    #[test]
+    fn deploy_spawns_selected_crew_and_swap_rebinds() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("lead".into(), 1);
+        let controlled = world
+            .deploy_crew(
+                pid,
+                vec![weapon(18)],
+                vec![
+                    crew("Vesper", "Point", 100.0),
+                    crew("Rook", "Driver", 100.0),
+                    crew("Iris", "Scout", 90.0),
+                ],
+                None,
+            )
+            .unwrap();
+        let squad_id = world.squads[&pid].squad_id.unwrap();
+        assert_eq!(world.crews[&squad_id].len(), 3);
+        assert_eq!(world.squads[&pid].controlled_actor_id, Some(controlled));
+        let ai = world.crews[&squad_id][1];
+        assert!(world.swap_actor(pid, ai).is_ok());
+        assert_eq!(world.squads[&pid].controlled_actor_id, Some(ai));
+        assert!(matches!(world.actors[&controlled].order, Order::Hold { .. }));
+        let other = world.register_squad("rival".into(), 2);
+        let foreign = world.deploy(other, vec![weapon(18)]).unwrap();
+        assert!(world.swap_actor(pid, foreign).is_err());
+        world.actors.get_mut(&controlled).unwrap().health = 0.0;
+        assert!(world.swap_actor(pid, controlled).is_err());
+    }
+
+    #[test]
+    fn coop_cannot_take_a_controlled_actor() {
+        let mut world = World::new(wall_map());
+        let a = world.register_squad("a".into(), 1);
+        let lead = world
+            .deploy_crew(a, vec![], vec![crew("Vesper", "Point", 100.0)], None)
+            .unwrap();
+        let squad_id = world.squads[&a].squad_id.unwrap();
+        let b = world.register_squad("b".into(), 2);
+        let second = world
+            .deploy_crew(
+                b,
+                vec![],
+                vec![crew("Rook", "Driver", 100.0)],
+                Some(squad_id),
+            )
+            .unwrap();
+        assert_ne!(lead, second);
+        assert_eq!(world.crews[&squad_id].len(), 2);
+        assert!(world.swap_actor(b, lead).is_err());
+        assert!(world.swap_actor(a, second).is_err());
+    }
+
+    #[test]
+    fn follow_order_closes_on_the_lead() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("lead".into(), 1);
+        let lead = world
+            .deploy_crew(
+                pid,
+                vec![],
+                vec![crew("Vesper", "Point", 100.0), crew("Rook", "Driver", 100.0)],
+                None,
+            )
+            .unwrap();
+        let ai = world.crews[&world.squads[&pid].squad_id.unwrap()][1];
+        world.actors.get_mut(&lead).unwrap().x = 36.0;
+        world.actors.get_mut(&lead).unwrap().y = 40.0;
+        world.actors.get_mut(&ai).unwrap().x = 20.0;
+        world.actors.get_mut(&ai).unwrap().y = 40.0;
+        let start = world.actors[&ai].x;
+        for _ in 0..30 {
+            world.tick();
+        }
+        assert!(
+            world.actors[&ai].x > start + 3.0,
+            "ai x {}",
+            world.actors[&ai].x
+        );
+    }
+
+    #[test]
+    fn engage_shoots_hostile_not_squadmate() {
+        let mut world = World::new(wall_map());
+        let pid = world.register_squad("lead".into(), 1);
+        let _lead = world
+            .deploy_crew(
+                pid,
+                vec![weapon(18)],
+                vec![crew("Vesper", "Point", 100.0), crew("Iris", "Scout", 90.0)],
+                None,
+            )
+            .unwrap();
+        let squad_id = world.squads[&pid].squad_id.unwrap();
+        let ai = world.crews[&squad_id][1];
+        world.actors.get_mut(&ai).unwrap().x = 20.0;
+        world.actors.get_mut(&ai).unwrap().y = 40.0;
+        world.actors.get_mut(&ai).unwrap().order = Order::Engage {
+            x: 20.0,
+            y: 40.0,
+            z: 0.0,
+        };
+        let ally = world.crews[&squad_id][0];
+        world.actors.get_mut(&ally).unwrap().x = 21.5;
+        world.actors.get_mut(&ally).unwrap().y = 40.0;
+        let foe_player = world.register_squad("foe".into(), 9);
+        let foe = world.deploy(foe_player, vec![weapon(18)]).unwrap();
+        world.actors.get_mut(&foe).unwrap().x = 26.0;
+        world.actors.get_mut(&foe).unwrap().y = 40.0;
+        let ally_hp = world.actors[&ally].health;
+        let foe_hp = world.actors[&foe].health;
+        for _ in 0..12 {
+            world.tick();
+        }
+        assert!((world.actors[&ally].health - ally_hp).abs() < 0.01);
+        assert!(
+            world.actors[&foe].health < foe_hp - 1.0,
+            "foe hp {}",
+            world.actors[&foe].health
+        );
     }
 }

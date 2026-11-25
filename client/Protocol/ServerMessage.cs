@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v2
+// Protocol scarlet.city v3
 
 using System;
 using System.Collections.Generic;
@@ -44,6 +44,15 @@ public abstract class ServerMessage
         [JsonPropertyName("actor_id")]
         public Guid? ActorId { get; set; }
 
+        [JsonPropertyName("squad_id")]
+        public Guid? SquadId { get; set; }
+
+        [JsonPropertyName("controlled_actor_id")]
+        public Guid? ControlledActorId { get; set; }
+
+        [JsonPropertyName("crew")]
+        public List<CrewMember> Crew { get; set; } = new List<CrewMember>();
+
     }
 
     public sealed class Snapshot : ServerMessage
@@ -53,6 +62,15 @@ public abstract class ServerMessage
 
         [JsonPropertyName("last_processed_input_seq")]
         public uint LastProcessedInputSeq { get; set; }
+
+        [JsonPropertyName("squad_id")]
+        public Guid? SquadId { get; set; }
+
+        [JsonPropertyName("controlled_actor_id")]
+        public Guid? ControlledActorId { get; set; }
+
+        [JsonPropertyName("crew")]
+        public List<CrewMember> Crew { get; set; } = new List<CrewMember>();
 
         [JsonPropertyName("players")]
         public List<PlayerState> Players { get; set; } = new List<PlayerState>();

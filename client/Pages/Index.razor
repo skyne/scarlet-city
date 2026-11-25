@@ -42,6 +42,29 @@ else if (Session.Phase == SessionPhase.Hideout)
                 </ul>
             </section>
             <section>
+                <h2>Crew · @Session.CrewCountLabel</h2>
+                <p class="muted">Deploy 1–4. @Session.SelectedCrewIds.Count selected.</p>
+                <ul class="inv crew-pick">
+                    @foreach (var member in Session.Roster)
+                    {
+                        var on = Session.SelectedCrewIds.Contains(member.ActorId);
+                        <li>
+                            <button type="button" class="pick @(on ? "on" : "")" @onclick="() => Session.ToggleCrew(member.ActorId)">
+                                <span class="tag">@member.Role</span>
+                                @member.Name
+                                <span class="qty">@member.MaxHp.ToString("0") hp</span>
+                            </button>
+                        </li>
+                    }
+                    @if (Session.Roster.Count == 0)
+                    {
+                        <li class="muted">Crew roster loading…</li>
+                    }
+                </ul>
+                <label>
+                    Join squad
+                    <input @bind="Session.JoinSquad" @bind:event="oninput" placeholder="optional squad id" />
+                </label>
                 <h2>Loadout</h2>
                 <label>
                     Weapon
@@ -128,9 +151,37 @@ else
     {
         <pre class="profile-overlay">@Session.Profile.Text()</pre>
     }
-    <div class="help">WASD (camera: W = up the screen) · mouse aim · click shoot
-E enter/exit / loot / death crates · Space/C altitude (hover)
-Shift brake · F3 debug (+ pred/server ghosts) · F4 profile</div>
+    <div class="crew-strip">
+        @{
+            var crew = Session.Snapshot?.Crew ?? new List<CrewMember>();
+        }
+        @for (var i = 0; i < crew.Count; i++)
+        {
+            var member = crew[i];
+            var you = member.ActorId == Session.ActorId;
+            var targeted = Session.OrderTargetId == member.ActorId;
+            var slot = i + 1;
+            <button type="button" class="crew-card @(you ? "you" : "") @(targeted ? "targeted" : "")"
+                    @onclick="() => Session.SelectOrderTarget(member.ActorId)">
+                <span class="slot">@slot</span>
+                <span class="who">@member.Name <span class="role">@member.Role</span></span>
+                <span class="hp">@member.Hp.ToString("0")/@member.MaxHp.ToString("0")</span>
+                <span class="badge">@(you ? "YOU" : member.IsAi ? "AI" : "CO-OP")</span>
+                @if (!string.IsNullOrEmpty(member.OrderLabel))
+                {
+                    <span class="order">@member.OrderLabel</span>
+                }
+            </button>
+        }
+        @if (Session.SquadId != Guid.Empty)
+        {
+            <p class="squad-id">Squad @Session.SquadId</p>
+        }
+    </div>
+    <div class="help">WASD moves while the mouse aims (W = up the screen) · click shoot
+1–4 or Tab swaps crew · click an AI card, then G cycles Hold / Follow / Engage
+Middle click or Alt+click: move / drive / fly · E enter/loot · Space/C altitude
+Shift brake · F3 debug (pred ghosts, loot respawn timers) · F4 profile</div>
 }
 
 @code {

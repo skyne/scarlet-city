@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v2
+// Protocol scarlet.city v3
 
 using System;
 using System.Collections.Generic;
@@ -27,6 +27,9 @@ public sealed class LootNode
 
     [JsonPropertyName("taken")]
     public bool Taken { get; set; }
+
+    [JsonPropertyName("respawn_secs")]
+    public float RespawnSecs { get; set; }
 
 }
 

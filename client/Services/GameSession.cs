@@ -56,6 +56,7 @@ public sealed class DebugStats
             $"server     {ServerX:0.00}, {ServerY:0.00}, {ServerZ:0.00}\n" +
             $"err        {PredError:0.03} m   pending {Pending}  ack {AckSeq}\n" +
             $"ghosts     gold pred  cyan server  purple interp\n" +
+            $"loot       hollow marker + tier timer while respawning\n" +
             $"vehicle    {(InVehicle ? "yes" : "on foot")}\n" +
             $"ents       players {Players}  vehicles {Vehicles}  shots {Projectiles}";
     }
@@ -175,10 +176,24 @@ public sealed class GameSession : IAsyncDisposable
     public int Cash { get; private set; }
     public List<StashItem> Stash { get; private set; } = new();
     public List<StashItem> DeployedLoadout { get; private set; } = new();
+    public List<CrewMember> Roster { get; private set; } = new();
+    public List<Guid> SelectedCrewIds { get; private set; } = new();
+    public string JoinSquad { get; set; } = "";
+    public Guid? OrderTargetId { get; private set; }
+    public Guid SquadId { get; private set; }
     public string PlayerName { get; private set; } = "";
     public ServerMessage.RaidEnded? LastRaid { get; private set; }
     public Guid? SelectedWeaponId { get; set; }
     public Guid? SelectedMedId { get; set; }
+
+    public string CrewCountLabel => SelectedCrewIds.Count switch
+    {
+        1 => "Solo",
+        2 => "Duo",
+        3 => "Trio",
+        4 => "Squad",
+        _ => "Pick a crew"
+    };
 
     /// <summary>Target frame time in milliseconds. 0 runs uncapped; set this for a later fps or vsync cap.</summary>
     public double FrameCapMs { get; set; }
@@ -189,6 +204,8 @@ public sealed class GameSession : IAsyncDisposable
     double _simAccum;
     bool _latchShoot;
     bool _latchInteract;
+    bool _rosterReady;
+    int _orderCycle;
     double _fpsEma;
     int _snapCount;
     double _snapWindowStart;
@@ -230,10 +247,40 @@ public sealed class GameSession : IAsyncDisposable
 
     public async Task DeployAsync()
     {
+        if (SelectedCrewIds.Count is < 1 or > 4) return;
         var ids = new List<Guid>();
         if (SelectedWeaponId is { } w) ids.Add(w);
         if (SelectedMedId is { } m) ids.Add(m);
-        await _transport.SendAsync(new ClientMessage.Deploy { LoadoutItemIds = ids });
+        Guid? join = Guid.TryParse(JoinSquad.Trim(), out var parsed) ? parsed : null;
+        await _transport.SendAsync(new ClientMessage.Deploy
+        {
+            LoadoutItemIds = ids,
+            CrewIds = SelectedCrewIds.ToList(),
+            JoinSquadId = join
+        });
+    }
+
+    public void ToggleCrew(Guid id)
+    {
+        if (SelectedCrewIds.Contains(id))
+        {
+            if (SelectedCrewIds.Count <= 1) return;
+            SelectedCrewIds.Remove(id);
+            return;
+        }
+        if (SelectedCrewIds.Count >= 4) return;
+        SelectedCrewIds.Add(id);
+    }
+
+    public void SelectOrderTarget(Guid actorId)
+    {
+        var member = Snapshot?.Crew.FirstOrDefault(c => c.ActorId == actorId);
+        if (member == null || !member.IsAi || actorId == ActorId)
+        {
+            OrderTargetId = null;
+            return;
+        }
+        OrderTargetId = OrderTargetId == actorId ? null : actorId;
     }
 
     public void DismissSummary()
@@ -332,8 +379,12 @@ public sealed class GameSession : IAsyncDisposable
         void AimAtPointer(PlayerState? body)
         {
             if (Map == null) return;
-            _camera.Follow(w, h, body, Map);
-            var planeZ = body?.Z ?? 0f;
+            if (body != null && ActorId != Guid.Empty)
+                _camera.Track(ActorId, body.X, body.Y, body.Z, now);
+            else
+                _camera.Follow(w, h, body, Map);
+            _camera.ApplyOrigin(w, h);
+            var planeZ = body?.Z ?? _camera.FocusZ;
             _camera.AimWorld(frame.PointerX, frame.PointerY, planeZ, out aimX, out aimY);
             var originX = body?.X ?? aimX;
             var originY = body?.Y ?? aimY;
@@ -403,6 +454,27 @@ public sealed class GameSession : IAsyncDisposable
                 _store.QueueAndPredict(pending);
             }
 
+            if (inRaid)
+            {
+                if (frame.SwapSlot is >= 1 and <= 4)
+                    await TrySwapSlot(frame.SwapSlot);
+                if (frame.SwapNext)
+                    await TrySwapNext();
+                if (frame.OrderPing)
+                {
+                    var order = (_orderCycle % 3) switch
+                    {
+                        0 => OrderType.Hold,
+                        1 => OrderType.Follow,
+                        _ => OrderType.Engage
+                    };
+                    _orderCycle++;
+                    await SendOrder(order, aimX, aimY, local?.Z ?? 0f);
+                }
+                if (frame.OrderMove)
+                    await SendOrder(OrderType.MoveOrDriveTo, aimX, aimY, local?.Z ?? 0f);
+            }
+
             if (now - _lastPingTs >= PingEveryMs)
             {
                 _lastPingTs = now;
@@ -421,7 +493,9 @@ public sealed class GameSession : IAsyncDisposable
             var drawn = _store.LocalActor(renderSnap);
             AimAtPointer(drawn ?? local);
             var ghosts = Debug.Visible ? _store.BuildGhosts(now) : null;
-            var scene = SceneComposer.Compose(w, h, Map, renderSnap, ActorId, aimX, aimY, aimAngle, ghosts);
+            var scene = SceneComposer.Compose(
+                w, h, Map, renderSnap, ActorId, aimX, aimY, aimAngle,
+                _camera.FocusX, _camera.FocusY, _camera.FocusZ, ghosts, Debug.Visible);
             _probe.ComposeMs = MsBetween(mark, Stopwatch.GetTimestamp());
             _probe.DrawOps = scene.Ops.Count;
             mark = Stopwatch.GetTimestamp();
@@ -482,23 +556,30 @@ public sealed class GameSession : IAsyncDisposable
                 Cash = profile.Cash;
                 Stash = profile.Stash;
                 DeployedLoadout = profile.DeployedLoadout;
+                ApplyRoster(profile.Crew);
+                if (profile.SquadId is { } sid && sid != Guid.Empty)
+                    SquadId = sid;
                 if (profile.ActorId is { } aid && aid != Guid.Empty)
                 {
-                    ActorId = aid;
-                    _store.ActorId = aid;
+                    AdoptActor(aid);
                     Phase = SessionPhase.Raid;
                     Status = "in-city";
                 }
                 else if (Phase == SessionPhase.Raid)
                 {
                     ActorId = Guid.Empty;
-                    _store.ActorId = Guid.Empty;
+                    _store.Reset();
+                    _camera.Reset();
                 }
                 SelectedWeaponId ??= Stash.FirstOrDefault(i => i.ItemType.Equals("Weapon", StringComparison.OrdinalIgnoreCase))?.Id;
                 SelectedMedId ??= Stash.FirstOrDefault(i => i.ItemType.Equals("Med", StringComparison.OrdinalIgnoreCase))?.Id;
                 break;
             case ServerMessage.Snapshot snap:
                 Snapshot = snap;
+                if (snap.SquadId is { } snapSquad && snapSquad != Guid.Empty)
+                    SquadId = snapSquad;
+                if (snap.ControlledActorId is { } controlled && controlled != Guid.Empty)
+                    AdoptActor(controlled);
                 _store.ApplySnapshot(snap, _clock.ElapsedMilliseconds);
                 _snapCount++;
                 var t = _clock.Elapsed.TotalSeconds;
@@ -515,8 +596,10 @@ public sealed class GameSession : IAsyncDisposable
                 Phase = SessionPhase.Summary;
                 Status = ended.Outcome;
                 ActorId = Guid.Empty;
+                OrderTargetId = null;
                 _store.Reset();
                 _store.Map = Map;
+                _camera.Reset();
                 Snapshot = null;
                 break;
             case ServerMessage.Pong pong:
@@ -529,14 +612,75 @@ public sealed class GameSession : IAsyncDisposable
                 LastEvent = $"{ev.Kind}: {ev.Message}";
                 if (ev.Kind == "deploy" && Guid.TryParse(ev.Message, out var deployedId))
                 {
-                    ActorId = deployedId;
-                    _store.ActorId = deployedId;
+                    AdoptActor(deployedId);
                     _store.Map = Map;
                     Phase = SessionPhase.Raid;
                     Status = "in-city";
                 }
+                if (ev.Kind == "swap" && Guid.TryParse(ev.Message, out var swappedId))
+                    AdoptActor(swappedId);
                 break;
         }
+    }
+
+    void ApplyRoster(List<CrewMember> crew)
+    {
+        Roster = crew;
+        var ids = crew.Select(c => c.ActorId).ToHashSet();
+        if (!_rosterReady)
+        {
+            SelectedCrewIds = crew.Select(c => c.ActorId).ToList();
+            _rosterReady = crew.Count > 0;
+            return;
+        }
+        SelectedCrewIds = SelectedCrewIds.Where(ids.Contains).ToList();
+        if (SelectedCrewIds.Count == 0 && crew.Count > 0)
+            SelectedCrewIds.Add(crew[0].ActorId);
+    }
+
+    void AdoptActor(Guid actorId)
+    {
+        if (actorId == Guid.Empty || actorId == ActorId) return;
+        ActorId = actorId;
+        _store.Anchor(actorId);
+        OrderTargetId = null;
+    }
+
+    async Task TrySwapSlot(int slot)
+    {
+        var crew = Snapshot?.Crew;
+        if (crew == null || slot > crew.Count) return;
+        var member = crew[slot - 1];
+        if (member.ActorId == ActorId || member.Hp <= 0) return;
+        if (!member.IsAi) return;
+        await _transport.SendAsync(new ClientMessage.SwapActor { TargetActorId = member.ActorId });
+    }
+
+    async Task TrySwapNext()
+    {
+        var crew = Snapshot?.Crew;
+        if (crew == null || crew.Count == 0) return;
+        var idx = crew.FindIndex(c => c.ActorId == ActorId);
+        for (var n = 1; n <= crew.Count; n++)
+        {
+            var member = crew[(idx + n + crew.Count) % crew.Count];
+            if (member.Hp <= 0 || member.ActorId == ActorId) continue;
+            if (!member.IsAi) continue;
+            await _transport.SendAsync(new ClientMessage.SwapActor { TargetActorId = member.ActorId });
+            return;
+        }
+    }
+
+    async Task SendOrder(OrderType order, float x, float y, float z)
+    {
+        await _transport.SendAsync(new ClientMessage.SquadOrder
+        {
+            OrderType = order,
+            TargetActorId = OrderTargetId,
+            X = x,
+            Y = y,
+            Z = z
+        });
     }
 
     public async ValueTask DisposeAsync()

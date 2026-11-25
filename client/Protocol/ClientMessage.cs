@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v2
+// Protocol scarlet.city v3
 
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,8 @@ namespace ScarletCity.Protocol;
 [JsonDerivedType(typeof(ClientMessage.Join), "Join")]
 [JsonDerivedType(typeof(ClientMessage.GetProfile), "GetProfile")]
 [JsonDerivedType(typeof(ClientMessage.Deploy), "Deploy")]
+[JsonDerivedType(typeof(ClientMessage.SwapActor), "SwapActor")]
+[JsonDerivedType(typeof(ClientMessage.SquadOrder), "SquadOrder")]
 [JsonDerivedType(typeof(ClientMessage.Input), "Input")]
 [JsonDerivedType(typeof(ClientMessage.Ping), "Ping")]
 public abstract class ClientMessage
@@ -31,6 +33,38 @@ public abstract class ClientMessage
     {
         [JsonPropertyName("loadout_item_ids")]
         public List<Guid> LoadoutItemIds { get; set; } = new List<Guid>();
+
+        [JsonPropertyName("crew_ids")]
+        public List<Guid> CrewIds { get; set; } = new List<Guid>();
+
+        [JsonPropertyName("join_squad_id")]
+        public Guid? JoinSquadId { get; set; }
+
+    }
+
+    public sealed class SwapActor : ClientMessage
+    {
+        [JsonPropertyName("target_actor_id")]
+        public Guid TargetActorId { get; set; }
+
+    }
+
+    public sealed class SquadOrder : ClientMessage
+    {
+        [JsonPropertyName("order_type")]
+        public OrderType OrderType { get; set; }
+
+        [JsonPropertyName("target_actor_id")]
+        public Guid? TargetActorId { get; set; }
+
+        [JsonPropertyName("x")]
+        public float X { get; set; }
+
+        [JsonPropertyName("y")]
+        public float Y { get; set; }
+
+        [JsonPropertyName("z")]
+        public float Z { get; set; }
 
     }
 

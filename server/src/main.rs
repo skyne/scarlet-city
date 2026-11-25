@@ -16,13 +16,13 @@ use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Router;
 use futures_util::{SinkExt, StreamExt};
-use sim::{InputState, World, DT};
+use sim::{CrewSpawn, InputState, World, DT};
 use sqlx::SqlitePool;
 use tokio::sync::{mpsc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
-use crate::protocol::{ClientMessage, ServerMessage, StashItem};
+use crate::protocol::{ClientMessage, CrewMember, ServerMessage, StashItem};
 
 struct ClientSlot {
     player_id: Uuid,
@@ -144,8 +144,18 @@ async fn handle_raid_event(state: &AppState, ev: sim::RaidEvent) {
     send_to_player(state, ev.player_id, &ended).await;
     if let Some(pid) = profile_id {
         if let Ok(profile) = db::load_profile(&state.db, pid).await {
-            send_profile(state, ev.player_id, &profile.stash, profile.cash, Vec::new(), None)
-                .await;
+            send_profile(
+                state,
+                ev.player_id,
+                &profile.stash,
+                profile.cash,
+                Vec::new(),
+                None,
+                None,
+                None,
+                &roster_members(&profile.crew),
+            )
+            .await;
         }
     }
 }
@@ -165,14 +175,37 @@ async fn send_profile(
     cash: i32,
     deployed: Vec<StashItem>,
     actor_id: Option<Uuid>,
+    squad_id: Option<Uuid>,
+    controlled_actor_id: Option<Uuid>,
+    crew: &[CrewMember],
 ) {
     let msg = ServerMessage::ProfileState {
         cash,
         stash: stash.to_vec(),
         deployed_loadout: deployed,
         actor_id,
+        squad_id,
+        controlled_actor_id,
+        crew: crew.to_vec(),
     };
     send_to_player(state, player_id, &msg).await;
+}
+
+fn roster_members(crew: &[db::CrewRecord]) -> Vec<CrewMember> {
+    crew.iter()
+        .map(|c| CrewMember {
+            actor_id: c.id,
+            name: c.name.clone(),
+            role: c.role.clone(),
+            hp: c.max_hp,
+            max_hp: c.max_hp,
+            is_ai: true,
+            order_label: String::new(),
+            order_x: 0.0,
+            order_y: 0.0,
+            order_z: 0.0,
+        })
+        .collect()
 }
 
 async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -245,6 +278,9 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                     stash: profile.stash,
                     deployed_loadout: Vec::new(),
                     actor_id: None,
+                    squad_id: None,
+                    controlled_actor_id: None,
+                    crew: roster_members(&profile.crew),
                 };
                 let _ = out_tx.send(serde_json::to_string(&ps).unwrap());
             }
@@ -253,24 +289,83 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                 let profile_id = state.world.lock().await.profile_id(id);
                 if let Some(pid) = profile_id {
                     if let Ok(profile) = db::load_profile(&state.db, pid).await {
-                        let deployed = state.world.lock().await.deployed_loadout(id);
-                        let actor_id = state
-                            .world
-                            .lock()
-                            .await
-                            .squad(id)
-                            .and_then(|s| s.controlled_actor_id);
-                        send_profile(&state, id, &profile.stash, profile.cash, deployed, actor_id)
-                            .await;
+                        let (deployed, actor_id, squad_id, controlled) = {
+                            let world = state.world.lock().await;
+                            let squad = world.squad(id);
+                            (
+                                world.deployed_loadout(id),
+                                squad.and_then(|s| s.controlled_actor_id),
+                                squad.and_then(|s| s.squad_id),
+                                squad.and_then(|s| s.controlled_actor_id),
+                            )
+                        };
+                        send_profile(
+                            &state,
+                            id,
+                            &profile.stash,
+                            profile.cash,
+                            deployed,
+                            actor_id,
+                            squad_id,
+                            controlled,
+                            &roster_members(&profile.crew),
+                        )
+                        .await;
                     }
                 }
             }
-            ClientMessage::Deploy { loadout_item_ids } => {
+            ClientMessage::Deploy {
+                loadout_item_ids,
+                crew_ids,
+                join_squad_id,
+            } => {
                 let Some(id) = player_id else { continue };
                 let profile_id = match state.world.lock().await.profile_id(id) {
                     Some(p) => p,
                     None => continue,
                 };
+                if crew_ids.is_empty() || crew_ids.len() > 4 {
+                    let ev = ServerMessage::Event {
+                        kind: "error".into(),
+                        message: "select 1 to 4 crew".into(),
+                    };
+                    let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    continue;
+                }
+                let roster = match db::load_crew(&state.db, profile_id).await {
+                    Ok(c) => c,
+                    Err(e) => {
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: format!("crew error: {e}"),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                        continue;
+                    }
+                };
+                let mut spawns = Vec::new();
+                let mut missing = false;
+                for cid in &crew_ids {
+                    if let Some(c) = roster.iter().find(|c| c.id == *cid) {
+                        spawns.push(CrewSpawn {
+                            specialist_id: c.id,
+                            name: c.name.clone(),
+                            role: c.role.clone(),
+                            max_hp: c.max_hp,
+                        });
+                    } else {
+                        missing = true;
+                        break;
+                    }
+                }
+                if missing || spawns.len() != crew_ids.len() {
+                    let ev = ServerMessage::Event {
+                        kind: "error".into(),
+                        message: "unknown crew member".into(),
+                    };
+                    let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    continue;
+                }
                 let taken = match db::take_loadout(&state.db, profile_id, &loadout_item_ids).await {
                     Ok(t) => t,
                     Err(e) => {
@@ -284,13 +379,25 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                 };
                 let deploy_result = {
                     let mut world = state.world.lock().await;
-                    world.deploy(id, taken.clone())
+                    world.deploy_crew(id, taken.clone(), spawns, join_squad_id)
                 };
                 match deploy_result {
                     Ok(actor_id) => {
                         let profile = db::load_profile(&state.db, profile_id).await.ok();
+                        let squad_id = state.world.lock().await.squad(id).and_then(|s| s.squad_id);
                         if let Some(p) = profile {
-                            send_profile(&state, id, &p.stash, p.cash, taken, Some(actor_id)).await;
+                            send_profile(
+                                &state,
+                                id,
+                                &p.stash,
+                                p.cash,
+                                taken,
+                                Some(actor_id),
+                                squad_id,
+                                Some(actor_id),
+                                &roster_members(&p.crew),
+                            )
+                            .await;
                         }
                         let ev = ServerMessage::Event {
                             kind: "deploy".into(),
@@ -308,6 +415,49 @@ async fn client_session(socket: WebSocket, state: Arc<AppState>) {
                         };
                         let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
                     }
+                }
+            }
+            ClientMessage::SwapActor { target_actor_id } => {
+                let Some(id) = player_id else { continue };
+                let result = {
+                    let mut world = state.world.lock().await;
+                    world.swap_actor(id, target_actor_id)
+                };
+                match result {
+                    Ok(()) => {
+                        let ev = ServerMessage::Event {
+                            kind: "swap".into(),
+                            message: target_actor_id.to_string(),
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    }
+                    Err(msg) => {
+                        let ev = ServerMessage::Event {
+                            kind: "error".into(),
+                            message: msg,
+                        };
+                        let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
+                    }
+                }
+            }
+            ClientMessage::SquadOrder {
+                order_type,
+                target_actor_id,
+                x,
+                y,
+                z,
+            } => {
+                let Some(id) = player_id else { continue };
+                let result = {
+                    let mut world = state.world.lock().await;
+                    world.squad_order(id, order_type, target_actor_id, x, y, z)
+                };
+                if let Err(msg) = result {
+                    let ev = ServerMessage::Event {
+                        kind: "error".into(),
+                        message: msg,
+                    };
+                    let _ = out_tx.send(serde_json::to_string(&ev).unwrap());
                 }
             }
             ClientMessage::Input {

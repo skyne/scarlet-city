@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v2
+// Protocol scarlet.city v3
 
 #![allow(dead_code)]
 
@@ -24,6 +24,14 @@ pub enum HitKind {
     Wall,
     Vehicle,
     Actor,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum OrderType {
+    Follow,
+    Hold,
+    MoveOrDriveTo,
+    Engage,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -128,10 +136,27 @@ pub struct StashItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrewMember {
+    pub actor_id: uuid::Uuid,
+    pub name: String,
+    pub role: String,
+    pub hp: f32,
+    pub max_hp: f32,
+    pub is_ai: bool,
+    pub order_label: String,
+    pub order_x: f32,
+    pub order_y: f32,
+    pub order_z: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlayerState {
     pub id: uuid::Uuid,
     pub player_id: uuid::Uuid,
+    pub squad_id: uuid::Uuid,
     pub name: String,
+    pub role: String,
+    pub is_ai: bool,
     pub x: f32,
     pub y: f32,
     pub z: f32,
@@ -180,6 +205,7 @@ pub struct LootNode {
     pub z: f32,
     pub tier: LootTier,
     pub taken: bool,
+    pub respawn_secs: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -212,6 +238,18 @@ pub enum ClientMessage {
     GetProfile,
     Deploy {
         loadout_item_ids: Vec<uuid::Uuid>,
+        crew_ids: Vec<uuid::Uuid>,
+        join_squad_id: Option<uuid::Uuid>,
+    },
+    SwapActor {
+        target_actor_id: uuid::Uuid,
+    },
+    SquadOrder {
+        order_type: OrderType,
+        target_actor_id: Option<uuid::Uuid>,
+        x: f32,
+        y: f32,
+        z: f32,
     },
     Input {
         seq: u32,
@@ -242,10 +280,16 @@ pub enum ServerMessage {
         stash: Vec<StashItem>,
         deployed_loadout: Vec<StashItem>,
         actor_id: Option<uuid::Uuid>,
+        squad_id: Option<uuid::Uuid>,
+        controlled_actor_id: Option<uuid::Uuid>,
+        crew: Vec<CrewMember>,
     },
     Snapshot {
         tick: u64,
         last_processed_input_seq: u32,
+        squad_id: Option<uuid::Uuid>,
+        controlled_actor_id: Option<uuid::Uuid>,
+        crew: Vec<CrewMember>,
         players: Vec<PlayerState>,
         vehicles: Vec<VehicleState>,
         loot_nodes: Vec<LootNode>,

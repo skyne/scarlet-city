@@ -1,5 +1,5 @@
 // AUTO-GENERATED from shared/protocol/scarlet.spdl — do not edit.
-// Protocol scarlet.city v2
+// Protocol scarlet.city v3
 
 using System;
 using System.Collections.Generic;
@@ -16,8 +16,17 @@ public sealed class PlayerState
     [JsonPropertyName("player_id")]
     public Guid PlayerId { get; set; }
 
+    [JsonPropertyName("squad_id")]
+    public Guid SquadId { get; set; }
+
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
+    public string Role { get; set; } = string.Empty;
+
+    [JsonPropertyName("is_ai")]
+    public bool IsAi { get; set; }
 
     [JsonPropertyName("x")]
     public float X { get; set; }

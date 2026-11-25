@@ -12,6 +12,10 @@ public sealed class InputFrame
     public bool Brake { get; set; }
     public bool ToggleDebug { get; set; }
     public bool ToggleProfile { get; set; }
+    public int SwapSlot { get; set; }
+    public bool SwapNext { get; set; }
+    public bool OrderPing { get; set; }
+    public bool OrderMove { get; set; }
     public int CanvasWidth { get; set; }
     public int CanvasHeight { get; set; }
 }

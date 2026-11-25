@@ -66,6 +66,19 @@ public sealed class GameStateStore
         LastAckSeq = 0;
     }
 
+    /// <summary>
+    /// Drop prediction for the previous body so the next snapshot anchors the new actor.
+    /// </summary>
+    public void Anchor(Guid actorId)
+    {
+        _pending.Clear();
+        HasPredicted = false;
+        LastAckSeq = 0;
+        ActorId = actorId;
+        LastServerLocal = null;
+        LastServerVehicle = null;
+    }
+
     public void QueueAndPredict(PendingInput input)
     {
         _pending.Add(input);
@@ -369,6 +382,21 @@ public sealed class GameStateStore
     {
         Tick = s.Tick,
         LastProcessedInputSeq = s.LastProcessedInputSeq,
+        SquadId = s.SquadId,
+        ControlledActorId = s.ControlledActorId,
+        Crew = s.Crew.Select(c => new CrewMember
+        {
+            ActorId = c.ActorId,
+            Name = c.Name,
+            Role = c.Role,
+            Hp = c.Hp,
+            MaxHp = c.MaxHp,
+            IsAi = c.IsAi,
+            OrderLabel = c.OrderLabel,
+            OrderX = c.OrderX,
+            OrderY = c.OrderY,
+            OrderZ = c.OrderZ
+        }).ToList(),
         Players = s.Players.Select(ClonePlayer).ToList(),
         Vehicles = s.Vehicles.Select(v => new VehicleState
         {
@@ -376,7 +404,7 @@ public sealed class GameStateStore
         }).ToList(),
         LootNodes = s.LootNodes.Select(n => new LootNode
         {
-            Id = n.Id, X = n.X, Y = n.Y, Z = n.Z, Tier = n.Tier, Taken = n.Taken
+            Id = n.Id, X = n.X, Y = n.Y, Z = n.Z, Tier = n.Tier, Taken = n.Taken, RespawnSecs = n.RespawnSecs
         }).ToList(),
         DeathCrates = s.DeathCrates.Select(c => new DeathCrate
         {
@@ -397,7 +425,10 @@ public sealed class GameStateStore
     {
         Id = p.Id,
         PlayerId = p.PlayerId,
+        SquadId = p.SquadId,
         Name = p.Name,
+        Role = p.Role,
+        IsAi = p.IsAi,
         X = p.X, Y = p.Y, Z = p.Z, Yaw = p.Yaw,
         Vx = p.Vx, Vy = p.Vy, Vz = p.Vz,
         Health = p.Health,

@@ -20,15 +20,19 @@ public static class SceneComposer
         float aimWorldX,
         float aimWorldY,
         float clientAimAngle,
-        DebugGhosts? ghosts = null)
+        float camX,
+        float camY,
+        float camZ,
+        DebugGhosts? ghosts = null,
+        bool debug = false)
     {
         var frame = new RenderFrame { Width = width, Height = height };
         var focus = snap.Players.FirstOrDefault(p => p.Id == localId) ?? snap.Players.FirstOrDefault();
-        var fx = focus?.X ?? map.Bounds.Width * 0.5f;
-        var fy = focus?.Y ?? map.Bounds.Depth * 0.5f;
-        var fz = focus?.Z ?? 0f;
+        var fx = focus?.X ?? camX;
+        var fy = focus?.Y ?? camY;
+        var fz = focus?.Z ?? camZ;
 
-        IsoProjection.Project(fx, fy, fz, Scale, ZScale, 0, 0, out var psx, out var psy);
+        IsoProjection.Project(camX, camY, camZ, Scale, ZScale, 0, 0, out var psx, out var psy);
         var originX = width * 0.5f - psx;
         var originY = height * 0.42f - psy;
 
@@ -80,7 +84,8 @@ public static class SceneComposer
         foreach (var p in snap.Players.OrderBy(p => p.X + p.Y).ThenBy(p => p.Z))
         {
             MaybeShadow(frame, p.X, p.Y, p.Z, 0.55f, P);
-            var color = p.Id == localId ? "#ffe066" : "#ff6b6b";
+            var friendly = snap.SquadId is { } sid && sid != Guid.Empty && p.SquadId == sid;
+            var color = p.Id == localId ? "#ffe066" : friendly ? "#7dffa8" : "#ff6b6b";
             DrawEntity(frame, p.X, p.Y, p.Z, 0.7f, 0.7f, 1.7f, color, P);
             var yaw = p.Id == localId ? clientAimAngle : p.Yaw;
             DrawFacing(frame, p.X, p.Y, p.Z, yaw, 1.8f, color, P);
@@ -109,6 +114,7 @@ public static class SceneComposer
         }
 
         DrawImpacts(frame, snap, P);
+        DrawOrders(frame, snap, P);
 
         if (ghosts != null)
             DrawNetGhosts(frame, ghosts, P);
@@ -122,6 +128,12 @@ public static class SceneComposer
         });
 
         DrawInteractPrompt(frame, snap, localId, P);
+
+        if (debug)
+        {
+            foreach (var loot in snap.LootNodes.Where(n => n.Taken && n.RespawnSecs > 0f))
+                DrawLootGhost(frame, loot, P);
+        }
 
         return frame;
     }
@@ -151,6 +163,38 @@ public static class SceneComposer
                 Fill = color,
                 Stroke = color,
                 Size = 2
+            });
+        }
+    }
+
+    static void DrawOrders(RenderFrame frame, ServerMessage.Snapshot snap, ProjectFn P)
+    {
+        var seen = new HashSet<(int, int, int)>();
+        foreach (var member in snap.Crew)
+        {
+            if (!member.IsAi) continue;
+            if (member.OrderLabel is not ("Hold" or "Move" or "Drive" or "Engage")) continue;
+            var key = ((int)MathF.Round(member.OrderX * 2), (int)MathF.Round(member.OrderY * 2), (int)MathF.Round(member.OrderZ * 2));
+            if (!seen.Add(key)) continue;
+            MaybeShadow(frame, member.OrderX, member.OrderY, member.OrderZ, 0.35f, P);
+            P(member.OrderX, member.OrderY, member.OrderZ, out var sx, out var sy);
+            var color = member.OrderLabel == "Engage" ? "rgba(255,120,96,0.9)" : "rgba(140,210,255,0.9)";
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "ring",
+                Pts = new[] { sx, sy, 8 },
+                Stroke = color,
+                Fill = color,
+                Size = 1.5f
+            });
+            P(member.OrderX, member.OrderY, member.OrderZ + 0.9f, out var tx, out var ty);
+            frame.Ops.Add(new DrawOp
+            {
+                Kind = "text",
+                Pts = new[] { tx, ty },
+                Fill = color,
+                Text = member.OrderLabel,
+                Size = 11
             });
         }
     }
@@ -464,6 +508,40 @@ public static class SceneComposer
             Pts = new[] { cx, cy - 7, cx, cy + 7 },
             Stroke = "#ffe066",
             Size = 1.5f
+        });
+    }
+
+    static void DrawLootGhost(RenderFrame frame, LootNode loot, ProjectFn P)
+    {
+        var color = LootColor(loot.Tier);
+        P(loot.X, loot.Y, 0, out var gx, out var gy);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "ring",
+            Pts = new[] { gx, gy, 8f },
+            Stroke = color,
+            Size = 1.5f,
+            Alpha = 0.85f
+        });
+        P(loot.X, loot.Y, loot.Z + 0.6f, out var sx, out var sy);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "dot",
+            Pts = new[] { sx, sy, 5 },
+            Fill = color,
+            Alpha = 0.4f
+        });
+        var secs = MathF.Max(0f, loot.RespawnSecs);
+        var clock = secs >= 10f ? $"{MathF.Ceiling(secs):0}s" : $"{secs:0.0}s";
+        P(loot.X, loot.Y, loot.Z + 1.5f, out var tx, out var ty);
+        frame.Ops.Add(new DrawOp
+        {
+            Kind = "text",
+            Pts = new[] { tx, ty },
+            Fill = color,
+            Text = $"{loot.Tier}  {clock}",
+            Size = 11,
+            Alpha = 0.95f
         });
     }
 
